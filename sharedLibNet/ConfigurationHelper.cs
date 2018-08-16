@@ -1,0 +1,37 @@
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using sharedLibNet.Model;
+using System;
+using System.Collections.Generic;
+using System.Dynamic;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace sharedLibNet
+{
+    public class ConfigurationHelper
+    {
+        protected HttpClient httpClient = new HttpClient();
+        protected ILogger _logger = null;
+        public ConfigurationHelper(ILogger logger)
+        {
+            _logger = logger;
+        }
+        public async Task<List<Stage>> GetConfiguration(string client, string app)
+        {
+            dynamic config = new ExpandoObject();
+            config.client = client;
+            config.app = app;
+            var responseMessage = await httpClient.PostAsync("https://configuration.hochfrequenz.org/api/Configuration", new StringContent(JsonConvert.SerializeObject(config)));
+            if (!responseMessage.IsSuccessStatusCode)
+            {
+                _logger.LogCritical($"Could not get configuration: {responseMessage.ReasonPhrase}");
+                var responseContent = await responseMessage.Content.ReadAsStringAsync();
+                _logger.LogCritical(responseContent);
+                return null;
+            }
+            return JsonConvert.DeserializeObject<List<Stage>>(await responseMessage.Content.ReadAsStringAsync());
+        }
+    }
+}

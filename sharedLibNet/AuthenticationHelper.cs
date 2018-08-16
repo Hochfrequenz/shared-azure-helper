@@ -1,0 +1,130 @@
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Protocols;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using RestSharp;
+using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace sharedLibNet
+{
+    public class AuthenticationHelper
+    {
+        private IConfigurationManager<OpenIdConnectConfiguration> _configurationManager;
+        public string _accessToken;
+        public Dictionary<string, string> _certStrings = new Dictionary<string, string>();
+        public IConfiguration AppConfiguration { get; set; }
+        public readonly string CertIssuer = "ConfigurationService";
+        public AuthenticationHelper(string certIssuer, IConfiguration config)
+        {
+            CertIssuer = certIssuer;
+            AppConfiguration = config;
+        }
+        public async Task Configure()
+        {
+            var issuer = AppConfiguration["ISSUER"];
+
+            var documentRetriever = new HttpDocumentRetriever();
+            documentRetriever.RequireHttps = issuer.StartsWith("https://");
+
+            _configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
+                $"{issuer.Substring(0, issuer.Length - 1)}/.well-known/openid-configuration",
+                new OpenIdConnectConfigurationRetriever(),
+                documentRetriever
+            );
+            if (AppConfiguration["ACCESS_TOKEN"] != null)
+            {
+                _accessToken = AppConfiguration["ACCESS_TOKEN"];
+            }
+            else
+            {
+                if (AppConfiguration["CLIENT_ID"] != null)
+                    _accessToken = await AuthenticateWithToken();
+
+            }
+        }
+        public async Task<string> AuthenticateWithCert(string target, bool overriding = false)
+        {
+            if (!overriding && _certStrings.ContainsKey(target))
+            {
+                return _certStrings[target];
+            }
+
+            var client = new RestClient($"{AppConfiguration["AUTHURL"]}");
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("X-Cert-For", target);
+            request.AddHeader("X-Cert-From", CertIssuer);
+            IRestResponse response = await client.ExecuteTaskAsync(request);
+            _certStrings.Add(target, response.Content);
+            return response.Content;
+        }
+        public async Task<string> AuthenticateWithToken()
+        {
+            var client = new RestClient($"{AppConfiguration["ISSUER"]}oauth/token");
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("content-type", "application/json");
+            JObject parameter = new JObject
+            {
+                ["client_id"] = AppConfiguration["CLIENT_ID"],
+                ["client_secret"] = AppConfiguration["CLIENT_SECRET"],
+                ["audience"] = AppConfiguration["NEW_AUDIENCE"],
+                ["grant_type"] = "client_credentials"
+            };
+            request.AddParameter("application/json", JsonConvert.SerializeObject(parameter), ParameterType.RequestBody);
+            IRestResponse response = await client.ExecuteTaskAsync(request);
+            return JsonConvert.DeserializeObject<JObject>(response.Content)["access_token"].Value<string>();
+        }
+        public async Task<ClaimsPrincipal> ValidateTokenAsync(string value)
+        {
+            if (_configurationManager == null)
+                await Configure();
+            var config = await _configurationManager.GetConfigurationAsync(CancellationToken.None);
+            var issuer = AppConfiguration["ISSUER"];
+            var audience = AppConfiguration["AUDIENCE"];
+
+            var validationParameter = new TokenValidationParameters()
+            {
+                RequireSignedTokens = true,
+                ValidAudience = audience,
+                ValidateAudience = true,
+                ValidIssuer = issuer,
+                ValidateIssuer = true,
+                ValidateIssuerSigningKey = true,
+                ValidateLifetime = true,
+                IssuerSigningKeys = config.SigningKeys
+            };
+
+            ClaimsPrincipal result = null;
+            var tries = 0;
+
+            while (result == null && tries <= 1)
+            {
+                try
+                {
+                    var handler = new JwtSecurityTokenHandler();
+                    result = handler.ValidateToken(value, validationParameter, out var token);
+                }
+                catch (SecurityTokenSignatureKeyNotFoundException)
+                {
+                    // This exception is thrown if the signature key of the JWT could not be found.
+                    // This could be the case when the issuer changed its signing keys, so we trigger a 
+                    // refresh and retry validation.
+                    _configurationManager.RequestRefresh();
+                    tries++;
+                }
+                catch (SecurityTokenException)
+                {
+                    return null;
+                }
+            }
+
+            return result;
+        }
+    }
+}
