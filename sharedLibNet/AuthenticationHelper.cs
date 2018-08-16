@@ -25,7 +25,7 @@ namespace sharedLibNet
         public string _accessToken;
         public Dictionary<string, string> _certStrings = new Dictionary<string, string>();
         public IConfiguration AppConfiguration { get; set; }
-        public readonly string CertIssuer = "ConfigurationService";
+        public readonly string CertIssuer = "<PassName>";
         public AuthenticationHelper(string certIssuer, IConfiguration config)
         {
             CertIssuer = certIssuer;
@@ -75,7 +75,7 @@ namespace sharedLibNet
                         byte[] clientCertBytes = Convert.FromBase64String(req.Headers["X-ARR-ClientCert"]);
                         var clientCert = new X509Certificate2(clientCertBytes);
                         var CN = clientCert.GetNameInfo(X509NameType.DnsName, false);
-                        if (CN != "ConfigurationService")
+                        if (CN != CertIssuer)
                         {
                             log.LogCritical("Certificate has wrong CN:" + CN);
                             return false;
