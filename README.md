@@ -1,0 +1,1 @@
+# shared-azure-helper
