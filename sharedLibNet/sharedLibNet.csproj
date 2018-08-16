@@ -2,6 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Company>Hochfrequenz</Company>
+    <PackageId>sharedAzureHelper</PackageId>
+    <Version>0.0.1</Version>
+    <Authors>Hochfrequenz</Authors>
+    <Product>sharedAzureHelper</Product>
+    <PackageProjectUrl>https://github.com/Hochfrequenz/shared-azure-helper</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Hochfrequenz/shared-azure-helper</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
