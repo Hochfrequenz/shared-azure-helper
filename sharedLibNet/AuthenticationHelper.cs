@@ -1,14 +1,19 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
 using System.Security.Claims;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -48,6 +53,56 @@ namespace sharedLibNet
                     _accessToken = await AuthenticateWithToken();
 
             }
+        }
+        public async Task<(bool authResult, IConfigurationRoot config)> Http_CheckAuth(HttpRequest req, ExecutionContext context, ILogger log)
+        {
+            var config = new ConfigurationBuilder()
+           .AddEnvironmentVariables()
+           .Build();
+            AppConfiguration = config;
+            ClaimsPrincipal principal;
+            AuthenticationHeaderValue authHeader = null;
+            try
+            {
+                authHeader = AuthenticationHeaderValue.Parse(req.Headers[HeaderNames.Authorization]); ;
+            }
+            catch (Exception) { }
+
+            if (authHeader == null || authHeader.Scheme != "Bearer")
+            {
+
+                if (req.Headers.ContainsKey("X-ARR-ClientCert"))
+                {
+                    try
+                    {
+                        byte[] clientCertBytes = Convert.FromBase64String(req.Headers["X-ARR-ClientCert"]);
+                        var clientCert = new X509Certificate2(clientCertBytes);
+                        var CN = clientCert.GetNameInfo(X509NameType.DnsName, false);
+                        if (CN != "ConfigurationService")
+                        {
+                            log.LogCritical("Certificate has wrong CN:" + CN);
+                            return (false, config);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        log.LogCritical($"Could not parse Certificate:{e.ToString()}");
+
+                        return (false, config);
+                    }
+                }
+                else
+                {
+                    log.LogCritical($"Client Cert header not given");
+                    return (false, config);
+                }
+            }
+            else if (( principal = await ValidateTokenAsync(authHeader.Parameter) ) == null)
+            {
+                log.LogCritical($"Token is invalid");
+                return (false, config);
+            }
+            return (true, config);
         }
         public async Task<string> AuthenticateWithCert(string target, bool overriding = false)
         {
