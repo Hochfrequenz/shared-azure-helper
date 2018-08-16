@@ -54,12 +54,9 @@ namespace sharedLibNet
 
             }
         }
-        public async Task<(bool authResult, IConfigurationRoot config)> Http_CheckAuth(HttpRequest req, ExecutionContext context, ILogger log)
+        public async Task<bool> Http_CheckAuth(HttpRequest req,  ILogger log)
         {
-            var config = new ConfigurationBuilder()
-           .AddEnvironmentVariables()
-           .Build();
-            AppConfiguration = config;
+          
             ClaimsPrincipal principal;
             AuthenticationHeaderValue authHeader = null;
             try
@@ -81,28 +78,28 @@ namespace sharedLibNet
                         if (CN != "ConfigurationService")
                         {
                             log.LogCritical("Certificate has wrong CN:" + CN);
-                            return (false, config);
+                            return false;
                         }
                     }
                     catch (Exception e)
                     {
                         log.LogCritical($"Could not parse Certificate:{e.ToString()}");
 
-                        return (false, config);
+                        return false;
                     }
                 }
                 else
                 {
                     log.LogCritical($"Client Cert header not given");
-                    return (false, config);
+                    return false;
                 }
             }
             else if (( principal = await ValidateTokenAsync(authHeader.Parameter) ) == null)
             {
                 log.LogCritical($"Token is invalid");
-                return (false, config);
+                return false;
             }
-            return (true, config);
+            return true;
         }
         public async Task<string> AuthenticateWithCert(string target, bool overriding = false)
         {
