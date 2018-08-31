@@ -109,7 +109,7 @@ namespace sharedLibNet
                         else
                         {
                             //try to reload the certList first
-                            await this.GetFingeprints();
+                            await this.GetFingeprints(log);
                             if (allowedCertificates != null && allowedCertificates.Contains(clientCert.Thumbprint))
                             {
                                 return true;
