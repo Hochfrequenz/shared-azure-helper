@@ -122,6 +122,7 @@ namespace sharedLibNet
                                 return false;
                             }
                         }
+                    }
                     catch (Exception e)
                     {
                         log.LogCritical($"Could not parse Certificate:{e.ToString()}");
