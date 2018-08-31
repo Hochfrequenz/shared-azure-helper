@@ -10,7 +10,9 @@ using Newtonsoft.Json.Linq;
 using RestSharp;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
@@ -26,10 +28,16 @@ namespace sharedLibNet
         public Dictionary<string, string> _certStrings = new Dictionary<string, string>();
         public IConfiguration AppConfiguration { get; set; }
         public readonly string CertIssuer = "<PassName>";
-        public AuthenticationHelper(string certIssuer, IConfiguration config)
+        public List<string> allowedCertificates = null;
+        protected HttpClient httpClient = new HttpClient();
+        protected ILogger _logger;
+        protected string _authURL;
+        public AuthenticationHelper(string certIssuer, string authURL, IConfiguration config, ILogger logger)
         {
+            _authURL = authURL;
             CertIssuer = certIssuer;
             AppConfiguration = config;
+            _logger = logger;
         }
         public async Task Configure()
         {
@@ -50,13 +58,29 @@ namespace sharedLibNet
             else
             {
                 if (AppConfiguration["CLIENT_ID"] != null)
+                {
                     _accessToken = await AuthenticateWithToken();
-
+                }
             }
         }
-        public async Task<bool> Http_CheckAuth(HttpRequest req,  ILogger log)
+        protected async Task GetFingeprints()
         {
-          
+            dynamic config = new ExpandoObject();
+
+            var responseMessage = await httpClient.GetAsync(_authURL);
+            if (!responseMessage.IsSuccessStatusCode)
+            {
+                _logger.LogCritical($"Could not get fingerprints: {responseMessage.ReasonPhrase}");
+                var responseContent = await responseMessage.Content.ReadAsStringAsync();
+                _logger.LogCritical(responseContent);
+                return;
+            }
+            JObject returnObj = (JObject)JsonConvert.DeserializeObject(await responseMessage.Content.ReadAsStringAsync());
+            this.allowedCertificates = returnObj["fingerprints"].ToObject<List<string>>();
+        }
+        public async Task<bool> Http_CheckAuth(HttpRequest req, ILogger log)
+        {
+
             ClaimsPrincipal principal;
             AuthenticationHeaderValue authHeader = null;
             try
@@ -80,7 +104,24 @@ namespace sharedLibNet
                             log.LogCritical("Certificate has wrong CN:" + CN);
                             return false;
                         }
-                    }
+                        if (allowedCertificates != null && allowedCertificates.Contains(clientCert.Thumbprint))
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            //try to reload the certList first
+                            await this.GetFingeprints();
+                            if (allowedCertificates != null && allowedCertificates.Contains(clientCert.Thumbprint))
+                            {
+                                return true;
+                            }
+                            else
+                            {
+                                log.LogCritical("Cert is not allowed. Reject");
+                                return false;
+                            }
+                        }
                     catch (Exception e)
                     {
                         log.LogCritical($"Could not parse Certificate:{e.ToString()}");
@@ -135,7 +176,10 @@ namespace sharedLibNet
         public async Task<ClaimsPrincipal> ValidateTokenAsync(string value)
         {
             if (_configurationManager == null)
+            {
                 await Configure();
+            }
+
             var config = await _configurationManager.GetConfigurationAsync(CancellationToken.None);
             var issuer = AppConfiguration["ISSUER"];
             var audience = AppConfiguration["AUDIENCE"];
