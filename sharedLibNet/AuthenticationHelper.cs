@@ -30,14 +30,12 @@ namespace sharedLibNet
         public readonly string CertIssuer = "<PassName>";
         public List<string> allowedCertificates = null;
         protected HttpClient httpClient = new HttpClient();
-        protected ILogger _logger;
         protected string _authURL;
-        public AuthenticationHelper(string certIssuer, string authURL, IConfiguration config, ILogger logger)
+        public AuthenticationHelper(string certIssuer, string authURL, IConfiguration config)
         {
             _authURL = authURL;
             CertIssuer = certIssuer;
             AppConfiguration = config;
-            _logger = logger;
         }
         public async Task Configure()
         {
@@ -63,16 +61,16 @@ namespace sharedLibNet
                 }
             }
         }
-        protected async Task GetFingeprints()
+        protected async Task GetFingeprints(ILogger log)
         {
             dynamic config = new ExpandoObject();
 
             var responseMessage = await httpClient.GetAsync(_authURL);
             if (!responseMessage.IsSuccessStatusCode)
             {
-                _logger.LogCritical($"Could not get fingerprints: {responseMessage.ReasonPhrase}");
+                log.LogCritical($"Could not get fingerprints: {responseMessage.ReasonPhrase}");
                 var responseContent = await responseMessage.Content.ReadAsStringAsync();
-                _logger.LogCritical(responseContent);
+                log.LogCritical(responseContent);
                 return;
             }
             JObject returnObj = (JObject)JsonConvert.DeserializeObject(await responseMessage.Content.ReadAsStringAsync());
