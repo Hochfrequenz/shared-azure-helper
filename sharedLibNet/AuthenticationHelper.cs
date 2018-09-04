@@ -21,7 +21,7 @@ using System.Threading.Tasks;
 
 namespace sharedLibNet
 {
-    public class AuthenticationHelper
+    public class AuthenticationHelper : IAuthenticationHelper
     {
         private IConfigurationManager<OpenIdConnectConfiguration> _configurationManager;
         public string _accessToken;
