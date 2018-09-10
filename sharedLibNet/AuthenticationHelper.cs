@@ -67,7 +67,7 @@ namespace sharedLibNet
         {
             dynamic config = new ExpandoObject();
 
-            var responseMessage = await httpClient.GetAsync(_authURL + "/fingeprints");
+            var responseMessage = await httpClient.GetAsync(_authURL + "/fingerprints");
             if (!responseMessage.IsSuccessStatusCode)
             {
                 log.LogCritical($"Could not get fingerprints: {responseMessage.ReasonPhrase}");
