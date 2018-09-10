@@ -5,7 +5,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Company>Hochfrequenz</Company>
     <PackageId>Hochfrequenz.sharedAzureHelper</PackageId>
-    <Version>0.0.13</Version>
+    <Version>0.0.14</Version>
     <Authors>Hochfrequenz</Authors>
     <Product>sharedAzureHelper</Product>
     <PackageProjectUrl>https://github.com/Hochfrequenz/shared-azure-helper</PackageProjectUrl>

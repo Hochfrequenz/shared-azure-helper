@@ -66,6 +66,10 @@ namespace sharedLibNet
         protected async Task GetFingerprints(ILogger log)
         {
             dynamic config = new ExpandoObject();
+            if (AppConfiguration["API_KEY"] != null)
+            {
+                httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", AppConfiguration["API_KEY"]);
+            }
 
             var responseMessage = await httpClient.GetAsync(_authURL + "/fingerprints");
             if (!responseMessage.IsSuccessStatusCode)
