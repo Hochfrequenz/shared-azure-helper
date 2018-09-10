@@ -63,7 +63,7 @@ namespace sharedLibNet
                 }
             }
         }
-        protected async Task GetFingeprints(ILogger log)
+        protected async Task GetFingerprints(ILogger log)
         {
             dynamic config = new ExpandoObject();
 
@@ -111,7 +111,7 @@ namespace sharedLibNet
                         else
                         {
                             //try to reload the certList first
-                            await this.GetFingeprints(log);
+                            await this.GetFingerprints(log);
                             if (allowedCertificates != null && allowedCertificates.Contains(clientCert.Thumbprint))
                             {
                                 return true;
