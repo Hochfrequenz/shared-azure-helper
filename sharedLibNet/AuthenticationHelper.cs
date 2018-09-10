@@ -41,8 +41,10 @@ namespace sharedLibNet
         {
             var issuer = AppConfiguration["ISSUER"];
 
-            var documentRetriever = new HttpDocumentRetriever();
-            documentRetriever.RequireHttps = issuer.StartsWith("https://");
+            var documentRetriever = new HttpDocumentRetriever
+            {
+                RequireHttps = issuer.StartsWith("https://")
+            };
 
             _configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
                 $"{issuer.Substring(0, issuer.Length - 1)}/.well-known/openid-configuration",
@@ -65,7 +67,7 @@ namespace sharedLibNet
         {
             dynamic config = new ExpandoObject();
 
-            var responseMessage = await httpClient.GetAsync(_authURL);
+            var responseMessage = await httpClient.GetAsync(_authURL + "/fingeprints");
             if (!responseMessage.IsSuccessStatusCode)
             {
                 log.LogCritical($"Could not get fingerprints: {responseMessage.ReasonPhrase}");
@@ -148,7 +150,7 @@ namespace sharedLibNet
                 return _certStrings[target];
             }
 
-            var client = new RestClient($"{AppConfiguration["AUTHURL"]}");
+            var client = new RestClient(_authURL + "/authentication");
             var request = new RestRequest(Method.POST);
             request.AddHeader("X-Cert-For", target);
             request.AddHeader("X-Cert-From", CertIssuer);
