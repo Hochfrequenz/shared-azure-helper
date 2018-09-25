@@ -18,7 +18,6 @@ namespace TestConfigService.Tests
 {
     public abstract class FunctionHelper
     {
-        protected TraceWriter log = new VerboseDiagnosticsTraceWriter();
         protected ILogger logger = new Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory().CreateLogger("NULL");
         protected ExecutionContext context = new ExecutionContext() { InvocationId = Guid.NewGuid(), FunctionAppDirectory = AppContext.BaseDirectory };
         public IAuthenticationHelper CreateMockedAuth()
