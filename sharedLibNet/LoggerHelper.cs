@@ -8,7 +8,7 @@ namespace sharedLibNet
     public class LoggerHelper
     {
         public static HttpClient httpClient = new HttpClient();
-        public static (ILogger, InMemoryLoggerProvider) CreateLogger(string serviceName)
+        public static (ILogger logger, InMemoryLoggerProvider loggerProvider) CreateLogger(string serviceName)
         {
             var factory = new LoggerFactory();
             var loggerProvider = new InMemoryLoggerProvider();
