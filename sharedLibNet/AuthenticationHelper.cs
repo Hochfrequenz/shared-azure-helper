@@ -38,7 +38,7 @@ namespace sharedLibNet
             CertIssuer = certIssuer;
             AppConfiguration = config;
         }
-        public async Task Configure()
+        public async Task Configure(ILogger log = null)
         {
             var issuer = AppConfiguration["ISSUER"];
 
@@ -60,7 +60,11 @@ namespace sharedLibNet
             {
                 if (AppConfiguration["CLIENT_ID"] != null)
                 {
-                    _accessToken = await AuthenticateWithToken();
+                    if (log != null)
+                    {
+                        log.LogDebug("Still haven't found an access token, so trying to get one via client_credentials");
+                    }
+                    _accessToken = await AuthenticateWithToken(log);
                 }
             }
         }
@@ -148,18 +152,29 @@ namespace sharedLibNet
             }
             return true;
         }
-        public async Task<string> AuthenticateWithCert(string target, bool overriding = false)
+        public async Task<string> AuthenticateWithCert(string target, bool overriding = false, ILogger log = null)
         {
             if (!overriding && _certStrings.ContainsKey(target))
             {
+                if (log != null)
+                {
+                    log.LogDebug($"Certificate already in cache, returning {_certStrings[target]}");
+                }
+
                 return _certStrings[target];
             }
 
             if (_accessToken == null)
             {
-                await Configure();
+                if (log != null)
+                {
+                    log.LogDebug($"Don't have an access token yet. Trying to configure");
+                }
+                await Configure(log);
                 if (_accessToken == null)
+                {
                     throw new Exception("Could not retrieve auth token. Is CLIENT_ID, CLIENT_SECRET and NEW_AUDIENCE set?");
+                }
             }
 
             if (authClient == null)
@@ -184,7 +199,7 @@ namespace sharedLibNet
             _certStrings.Add(target, response.Content);
             return response.Content;
         }
-        public async Task<string> AuthenticateWithToken()
+        public async Task<string> AuthenticateWithToken(ILogger log = null)
         {
             var client = new RestClient($"{AppConfiguration["ISSUER"]}oauth/token");
             var request = new RestRequest(Method.POST);
@@ -196,8 +211,20 @@ namespace sharedLibNet
                 ["audience"] = AppConfiguration["NEW_AUDIENCE"],
                 ["grant_type"] = "client_credentials"
             };
+            if (log != null)
+            {
+                log.LogDebug($"Trying to get oauth token from {AppConfiguration["ISSUER"]}oauth/token with client id {AppConfiguration["CLIENT_ID"]} and audience {AppConfiguration["NEW_AUDIENCE"]}");
+            }
             request.AddParameter("application/json", JsonConvert.SerializeObject(parameter), ParameterType.RequestBody);
             IRestResponse response = await client.ExecuteTaskAsync(request);
+            if (log != null)
+            {
+                log.LogDebug($"Oauth response status code: {response.StatusCode}");
+                if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    log.LogDebug($"Oauth status code not ok, reason:{response.Content}");
+                }
+            }
             return JsonConvert.DeserializeObject<JObject>(response.Content)["access_token"].Value<string>();
         }
         public async Task<ClaimsPrincipal> ValidateTokenAsync(string value)

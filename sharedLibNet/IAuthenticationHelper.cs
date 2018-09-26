@@ -10,9 +10,9 @@ namespace sharedLibNet
     {
         IConfiguration AppConfiguration { get; set; }
 
-        Task<string> AuthenticateWithCert(string target, bool overriding = false);
-        Task<string> AuthenticateWithToken();
-        Task Configure();
+        Task<string> AuthenticateWithCert(string target, bool overriding = false, ILogger log = null);
+        Task<string> AuthenticateWithToken(ILogger log);
+        Task Configure(ILogger log);
         Task<bool> Http_CheckAuth(HttpRequest req, ILogger log);
         Task<ClaimsPrincipal> ValidateTokenAsync(string value);
     }
