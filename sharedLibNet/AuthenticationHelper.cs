@@ -31,6 +31,7 @@ namespace sharedLibNet
         public List<string> allowedCertificates = null;
         protected HttpClient httpClient = new HttpClient();
         protected string _authURL;
+        public RestClient authClient = null;
         public AuthenticationHelper(string certIssuer, string authURL, IConfiguration config)
         {
             _authURL = authURL;
@@ -154,7 +155,11 @@ namespace sharedLibNet
                 return _certStrings[target];
             }
 
-            var client = new RestClient(_authURL + "/authenticate");
+            if (authClient == null)
+            {
+                authClient = new RestClient($"{AppConfiguration["AUTH_URL"]}/authenticate");
+            }
+
             var request = new RestRequest(Method.POST);
             request.AddHeader("X-Cert-For", target);
             request.AddHeader("X-Cert-From", CertIssuer);
@@ -162,7 +167,13 @@ namespace sharedLibNet
             {
                 request.AddHeader("Ocp-Apim-Subscription-Key", AppConfiguration["API_KEY"]);
             }
-            IRestResponse response = await client.ExecuteTaskAsync(request);
+            request.AddHeader("Authorization", "Bearer " + _accessToken);
+            IRestResponse response = await authClient.ExecuteTaskAsync(request);
+            if (response.IsSuccessful == false)
+            {
+                throw new Exception($"AuthService could not be reached:{response.StatusCode}");
+            }
+
             _certStrings.Add(target, response.Content);
             return response.Content;
         }
