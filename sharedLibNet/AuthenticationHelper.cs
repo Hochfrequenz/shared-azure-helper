@@ -130,7 +130,7 @@ namespace sharedLibNet
                     }
                     catch (Exception e)
                     {
-                        log.LogCritical($"Could not parse Certificate: {req.Headers["X-ARR-ClientCert"]} {e.ToString()}");
+                        log.LogCritical($"Could not parse Certificate: {req.Headers["X-ARR-ClientCert"]} : {e.ToString()}");
 
                         return false;
                     }
@@ -156,7 +156,11 @@ namespace sharedLibNet
             }
 
             if (_accessToken == null)
+            {
                 await Configure();
+                if (_accessToken == null)
+                    throw new Exception("Could not retrieve auth token. Is CLIENT_ID, CLIENT_SECRET and NEW_AUDIENCE set?");
+            }
 
             if (authClient == null)
             {
