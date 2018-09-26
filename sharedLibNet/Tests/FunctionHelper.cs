@@ -14,7 +14,7 @@ using Microsoft.Extensions.Logging;
 using sharedLibNet;
 using System.Threading.Tasks;
 
-namespace TestConfigService.Tests
+namespace sharedLibNet.Tests
 {
     public abstract class FunctionHelper
     {

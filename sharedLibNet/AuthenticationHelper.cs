@@ -154,7 +154,7 @@ namespace sharedLibNet
                 return _certStrings[target];
             }
 
-            var client = new RestClient(_authURL + "/authentication");
+            var client = new RestClient(_authURL + "/authenticate");
             var request = new RestRequest(Method.POST);
             request.AddHeader("X-Cert-For", target);
             request.AddHeader("X-Cert-From", CertIssuer);
