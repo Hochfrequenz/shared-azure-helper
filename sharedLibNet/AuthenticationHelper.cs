@@ -155,6 +155,9 @@ namespace sharedLibNet
                 return _certStrings[target];
             }
 
+            if (_accessToken == null)
+                await Configure();
+
             if (authClient == null)
             {
                 authClient = new RestClient($"{AppConfiguration["AUTH_URL"]}/authenticate");
