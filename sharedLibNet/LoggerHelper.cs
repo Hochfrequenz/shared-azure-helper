@@ -15,9 +15,9 @@ namespace sharedLibNet
             factory.AddProvider(loggerProvider);
             return (factory.CreateLogger(serviceName), loggerProvider);
         }
-        public static async Task<HttpResponseMessage> SendLogToServer(string URL, InMemoryLoggerProvider logger, IAuthenticationHelper authHelper)
+        public static async Task<HttpResponseMessage> SendLogToServer(string URL, InMemoryLoggerProvider logger, string certificate)
         {
-            var cert = await authHelper.AuthenticateWithCert("LoggingService");
+            var cert = certificate;
             if (httpClient.DefaultRequestHeaders.Contains("X-ARR-ClientCert"))
             {
                 httpClient.DefaultRequestHeaders.Remove("X-ARR-ClientCert");
