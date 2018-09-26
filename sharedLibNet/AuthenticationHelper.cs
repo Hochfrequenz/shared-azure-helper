@@ -158,6 +158,10 @@ namespace sharedLibNet
             var request = new RestRequest(Method.POST);
             request.AddHeader("X-Cert-For", target);
             request.AddHeader("X-Cert-From", CertIssuer);
+            if (AppConfiguration["API_KEY"] != null)
+            {
+                request.AddHeader("Ocp-Apim-Subscription-Key", AppConfiguration["API_KEY"]);
+            }
             IRestResponse response = await client.ExecuteTaskAsync(request);
             _certStrings.Add(target, response.Content);
             return response.Content;
