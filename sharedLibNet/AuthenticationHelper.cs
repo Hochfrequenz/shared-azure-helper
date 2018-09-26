@@ -130,7 +130,7 @@ namespace sharedLibNet
                     }
                     catch (Exception e)
                     {
-                        log.LogCritical($"Could not parse Certificate:{e.ToString()}");
+                        log.LogCritical($"Could not parse Certificate: {req.Headers["X-ARR-ClientCert"]} {e.ToString()}");
 
                         return false;
                     }
