@@ -1,16 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using sharedLibNet.Logging;
-using System;
-using System.Collections.Generic;
 using System.Dynamic;
 using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace sharedLibNet
 {
-   
+
     public class LoggerHelper
     {
         public static HttpClient httpClient = new HttpClient();
@@ -41,6 +37,17 @@ namespace sharedLibNet
             httpClient.DefaultRequestHeaders.Add("X-ARR-ClientCert", cert);
 
             return await httpClient.PostAsync(URL, new StringContent(JsonConvert.SerializeObject(logger.Messages)));
+        }
+        public static async Task<HttpResponseMessage> GetEventLogs(string URL, string certificate)
+        {
+            var cert = certificate;
+            if (httpClient.DefaultRequestHeaders.Contains("X-ARR-ClientCert"))
+            {
+                httpClient.DefaultRequestHeaders.Remove("X-ARR-ClientCert");
+            }
+            httpClient.DefaultRequestHeaders.Add("X-ARR-ClientCert", cert);
+
+            return await httpClient.GetAsync(URL);
         }
     }
 }
