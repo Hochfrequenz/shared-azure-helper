@@ -195,8 +195,8 @@ namespace sharedLibNet
             {
                 throw new Exception($"AuthService could not be reached:{response.StatusCode}");
             }
-
-            _certStrings.Add(target, response.Content);
+            if(!_certStrings.ContainsKey(target))
+                _certStrings.Add(target, response.Content);
             return response.Content;
         }
         public async Task<string> AuthenticateWithToken(ILogger log = null)
