@@ -110,7 +110,7 @@ namespace sharedLibNet
                         var CN = clientCert.GetNameInfo(X509NameType.DnsName, false);
                         if (CN != CertIssuer)
                         {
-                            log.LogCritical("Certificate has wrong CN:" + CN);
+                            log.LogCritical($"Certificate has wrong CN {CN} instead of {CertIssuer}");
                             return false;
                         }
                         if (allowedCertificates != null && allowedCertificates.Contains(clientCert.Thumbprint))
