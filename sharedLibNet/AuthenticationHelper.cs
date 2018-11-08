@@ -235,20 +235,41 @@ namespace sharedLibNet
             }
 
             var config = await _configurationManager.GetConfigurationAsync(CancellationToken.None);
-            var issuer = AppConfiguration["ISSUER"];
-            var audience = AppConfiguration["AUDIENCE"];
-
-            var validationParameter = new TokenValidationParameters()
+            TokenValidationParameters validationParameter = null;
+            if (AppConfiguration["ISSUER"] != null)
             {
-                RequireSignedTokens = true,
-                ValidAudience = audience,
-                ValidateAudience = true,
-                ValidIssuer = issuer,
-                ValidateIssuer = true,
-                ValidateIssuerSigningKey = true,
-                ValidateLifetime = true,
-                IssuerSigningKeys = config.SigningKeys
-            };
+                var issuer = AppConfiguration["ISSUER"];
+                var audience = AppConfiguration["AUDIENCE"];
+
+                validationParameter = new TokenValidationParameters()
+                {
+                    RequireSignedTokens = true,
+                    ValidAudience = audience,
+                    ValidateAudience = true,
+                    ValidIssuer = issuer,
+                    ValidateIssuer = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidateLifetime = true,
+                    IssuerSigningKeys = config.SigningKeys
+                };
+            }
+            else if(AppConfiguration.GetSection("ISSUERS") != null)
+            {
+                validationParameter = new TokenValidationParameters()
+                {
+                    RequireSignedTokens = true,
+                    ValidAudiences = AppConfiguration.GetSection("AUDIENCES").Get<string[]>(),
+                    ValidateAudience = true,
+                    ValidIssuers = AppConfiguration.GetSection("ISSUERS").Get<string[]>(),
+                    ValidateIssuer = true,
+                    ValidateIssuerSigningKey = false,
+                    ValidateLifetime = true,
+                };
+            }
+            else
+            {
+                throw new Exception("Please define either ISSUER and AUDIENCE or ISSUERS AND AUDIENCES");
+            }
 
             ClaimsPrincipal result = null;
             var tries = 0;
