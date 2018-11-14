@@ -16,11 +16,18 @@ namespace sharedLibNet
         {
             _logger = logger;
         }
-        public async Task<List<Stage>> GetConfiguration(string client, string app, string configURL)
+        public async Task<List<Stage>> GetConfiguration(string clientCertString, string client, string app, string configURL)
         {
             dynamic config = new ExpandoObject();
             config.client = client;
             config.app = app;
+            if (httpClient.DefaultRequestHeaders.Contains("X-ARR-ClientCert"))
+            {
+                httpClient.DefaultRequestHeaders.Remove("X-ARR-ClientCert");
+            }
+
+            httpClient.DefaultRequestHeaders.Add("X-ARR-ClientCert", clientCertString);
+
             var responseMessage = await httpClient.PostAsync(configURL, new StringContent(JsonConvert.SerializeObject(config)));
             if (!responseMessage.IsSuccessStatusCode)
             {
