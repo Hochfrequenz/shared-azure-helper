@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using sharedLibNet.Model;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -16,9 +17,9 @@ namespace sharedLibNet
         {
             _logger = logger;
         }
-        public async Task<List<Stage>> RetrieveURLs(List<string> urls, string lookupURL, string clientCertString)
+        public async Task<Dictionary<string, JArray>> RetrieveURLs(List<string> urls, string lookupURL, string clientCertString)
         {
-           
+
             if (httpClient.DefaultRequestHeaders.Contains("X-ARR-ClientCert"))
             {
                 httpClient.DefaultRequestHeaders.Remove("X-ARR-ClientCert");
@@ -34,7 +35,7 @@ namespace sharedLibNet
                 _logger.LogCritical(responseContent);
                 return null;
             }
-            return JsonConvert.DeserializeObject<List<Stage>>(await responseMessage.Content.ReadAsStringAsync());
+            return JsonConvert.DeserializeObject<Dictionary<string, JArray>>(await responseMessage.Content.ReadAsStringAsync());
         }
     }
 }
