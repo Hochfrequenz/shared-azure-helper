@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using sharedLibNet.Model;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -16,7 +17,7 @@ namespace sharedLibNet
         {
             _logger = logger;
         }
-        public async Task<List<Stage>> GetConfiguration(string clientCertString, string client, string app, string configURL)
+        public async Task<Dictionary<string, JArray>> GetConfiguration(string clientCertString, string client, string app, string configURL)
         {
             dynamic config = new ExpandoObject();
             config.client = client;
@@ -36,7 +37,7 @@ namespace sharedLibNet
                 _logger.LogCritical(responseContent);
                 return null;
             }
-            return JsonConvert.DeserializeObject<List<Stage>>(await responseMessage.Content.ReadAsStringAsync());
+            return JsonConvert.DeserializeObject<Dictionary<string, JArray>>(await responseMessage.Content.ReadAsStringAsync());
         }
     }
 }
