@@ -13,13 +13,13 @@ using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-
 namespace sharedLibNet
 {
     public class AuthenticationHelper : IAuthenticationHelper
@@ -100,6 +100,14 @@ namespace sharedLibNet
                     {
                         authHeader = AuthenticationHeaderValue.Parse(req.Headers[HeaderNames.Authorization]); ;
                     }
+                    using (MiniProfiler.Current.Step("Reading header - alternative Version"))
+                    {
+                        if (req.Headers.TryGetValue("Authorization", out var authHeaders))
+                        {
+                            authHeader = new AuthenticationHeaderValue(null, authHeaders.FirstOrDefault());
+                        }
+                    }
+
                 }
                 catch (Exception) { }
 
