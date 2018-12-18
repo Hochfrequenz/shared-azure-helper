@@ -96,7 +96,10 @@ namespace sharedLibNet
                 AuthenticationHeaderValue authHeader = null;
                 try
                 {
-                    authHeader = AuthenticationHeaderValue.Parse(req.Headers[HeaderNames.Authorization]); ;
+                    using (MiniProfiler.Current.Step("Reading header"))
+                    {
+                        authHeader = AuthenticationHeaderValue.Parse(req.Headers[HeaderNames.Authorization]); ;
+                    }
                 }
                 catch (Exception) { }
 
@@ -108,7 +111,11 @@ namespace sharedLibNet
                         try
                         {
 
-                            byte[] clientCertBytes = Convert.FromBase64String(req.Headers["X-ARR-ClientCert"]);
+                            byte[] clientCertBytes = null;
+                            using (MiniProfiler.Current.Step("Decoding string"))
+                            {
+                                clientCertBytes = Convert.FromBase64String(req.Headers["X-ARR-ClientCert"]);
+                            }
                             X509Certificate2 clientCert = null;
                             using (MiniProfiler.Current.Step("DecodingCert"))
                             {
