@@ -112,7 +112,7 @@ namespace sharedLibNet
                             X509Certificate2 clientCert = null;
                             using (MiniProfiler.Current.Step("DecodingCert"))
                             {
-                                new X509Certificate2(clientCertBytes);
+                                clientCert = new X509Certificate2(clientCertBytes);
                             }
                             var CN = clientCert.GetNameInfo(X509NameType.DnsName, false);
                             if (CN != CertIssuer)
