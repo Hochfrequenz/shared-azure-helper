@@ -8,6 +8,7 @@ using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
+using StackExchange.Profiling;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -89,68 +90,78 @@ namespace sharedLibNet
         }
         public async Task<bool> Http_CheckAuth(HttpRequest req, ILogger log)
         {
-
-            ClaimsPrincipal principal;
-            AuthenticationHeaderValue authHeader = null;
-            try
+            using (MiniProfiler.Current.Step("CheckingAuth"))
             {
-                authHeader = AuthenticationHeaderValue.Parse(req.Headers[HeaderNames.Authorization]); ;
-            }
-            catch (Exception) { }
-
-            if (authHeader == null || authHeader.Scheme != "Bearer")
-            {
-
-                if (req.Headers.ContainsKey("X-ARR-ClientCert"))
+                ClaimsPrincipal principal;
+                AuthenticationHeaderValue authHeader = null;
+                try
                 {
-                    try
+                    authHeader = AuthenticationHeaderValue.Parse(req.Headers[HeaderNames.Authorization]); ;
+                }
+                catch (Exception) { }
+
+                if (authHeader == null || authHeader.Scheme != "Bearer")
+                {
+
+                    if (req.Headers.ContainsKey("X-ARR-ClientCert"))
                     {
-                        byte[] clientCertBytes = Convert.FromBase64String(req.Headers["X-ARR-ClientCert"]);
-                        var clientCert = new X509Certificate2(clientCertBytes);
-                        var CN = clientCert.GetNameInfo(X509NameType.DnsName, false);
-                        if (CN != CertIssuer)
+                        try
                         {
-                            log.LogCritical($"Certificate has wrong CN {CN} instead of {CertIssuer}");
-                            return false;
-                        }
-                        if (allowedCertificates != null && allowedCertificates.Contains(clientCert.Thumbprint))
-                        {
-                            return true;
-                        }
-                        else
-                        {
-                            //try to reload the certList first
-                            await this.GetFingerprints(log);
-                            if (allowedCertificates != null && allowedCertificates.Contains(clientCert.Thumbprint))
+
+                            byte[] clientCertBytes = Convert.FromBase64String(req.Headers["X-ARR-ClientCert"]);
+                            X509Certificate2 clientCert = null;
+                            using (MiniProfiler.Current.Step("DecodingCert"))
                             {
-                                return true;
+                                new X509Certificate2(clientCertBytes);
                             }
-                            else
+                            var CN = clientCert.GetNameInfo(X509NameType.DnsName, false);
+                            if (CN != CertIssuer)
                             {
-                                log.LogCritical("Cert is not allowed. Reject");
+                                log.LogCritical($"Certificate has wrong CN {CN} instead of {CertIssuer}");
                                 return false;
                             }
+                            using (MiniProfiler.Current.Step("CheckingFingerprint"))
+                            {
+                                if (allowedCertificates != null && allowedCertificates.Contains(clientCert.Thumbprint))
+                                {
+                                    return true;
+                                }
+                                else
+                                {
+                                    //try to reload the certList first
+                                    await this.GetFingerprints(log);
+                                    if (allowedCertificates != null && allowedCertificates.Contains(clientCert.Thumbprint))
+                                    {
+                                        return true;
+                                    }
+                                    else
+                                    {
+                                        log.LogCritical("Cert is not allowed. Reject");
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            log.LogCritical($"Could not parse Certificate: {req.Headers["X-ARR-ClientCert"]} : {e.ToString()}");
+
+                            return false;
                         }
                     }
-                    catch (Exception e)
+                    else
                     {
-                        log.LogCritical($"Could not parse Certificate: {req.Headers["X-ARR-ClientCert"]} : {e.ToString()}");
-
+                        log.LogCritical($"Client Cert header not given");
                         return false;
                     }
                 }
-                else
+                else if ((principal = await ValidateTokenAsync(authHeader.Parameter)) == null)
                 {
-                    log.LogCritical($"Client Cert header not given");
+                    log.LogCritical($"Token is invalid");
                     return false;
                 }
+                return true;
             }
-            else if (( principal = await ValidateTokenAsync(authHeader.Parameter) ) == null)
-            {
-                log.LogCritical($"Token is invalid");
-                return false;
-            }
-            return true;
         }
         public async Task<string> AuthenticateWithCert(string target, bool overriding = false, ILogger log = null)
         {
@@ -195,8 +206,11 @@ namespace sharedLibNet
             {
                 throw new Exception($"AuthService could not be reached:{response.StatusCode}");
             }
-            if(!_certStrings.ContainsKey(target))
+            if (!_certStrings.ContainsKey(target))
+            {
                 _certStrings.Add(target, response.Content);
+            }
+
             return response.Content;
         }
         public async Task<string> AuthenticateWithToken(ILogger log = null)
@@ -253,7 +267,7 @@ namespace sharedLibNet
                     IssuerSigningKeys = config.SigningKeys
                 };
             }
-            else if(AppConfiguration.GetSection("ISSUERS") != null)
+            else if (AppConfiguration.GetSection("ISSUERS") != null)
             {
                 validationParameter = new TokenValidationParameters()
                 {
