@@ -96,10 +96,6 @@ namespace sharedLibNet
                 AuthenticationHeaderValue authHeader = null;
                 try
                 {
-                    using (MiniProfiler.Current.Step("Reading header"))
-                    {
-                        authHeader = AuthenticationHeaderValue.Parse(req.Headers[HeaderNames.Authorization]); ;
-                    }
                     using (MiniProfiler.Current.Step("Reading header - alternative Version"))
                     {
                         if (req.Headers.TryGetValue("Authorization", out var authHeaders))
@@ -107,6 +103,11 @@ namespace sharedLibNet
                             authHeader = new AuthenticationHeaderValue(null, authHeaders.FirstOrDefault());
                         }
                     }
+                    //using (MiniProfiler.Current.Step("Reading header"))
+                    //{
+                    //    authHeader = AuthenticationHeaderValue.Parse(req.Headers[HeaderNames.Authorization]); ;
+                    //}
+                   
 
                 }
                 catch (Exception) { }
