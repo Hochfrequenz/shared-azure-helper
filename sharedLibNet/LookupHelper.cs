@@ -17,7 +17,7 @@ namespace sharedLibNet
         {
             _logger = logger;
         }
-        public async Task<Dictionary<string, JArray>> RetrieveURLs(List<string> urls, string lookupURL, string clientCertString)
+        public async Task<Dictionary<string, JArray>> RetrieveURLs(List<string> urls, string lookupURL, string clientCertString, string apiKey)
         {
 
             if (httpClient.DefaultRequestHeaders.Contains("X-ARR-ClientCert"))
@@ -26,7 +26,14 @@ namespace sharedLibNet
             }
 
             httpClient.DefaultRequestHeaders.Add("X-ARR-ClientCert", clientCertString);
-
+            if (httpClient.DefaultRequestHeaders.Contains("Ocp-Apim-Subscription-Key"))
+            {
+                httpClient.DefaultRequestHeaders.Remove("Ocp-Apim-Subscription-Key");
+            }
+            if (!string.IsNullOrEmpty(apiKey))
+            {
+                httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", apiKey);
+            }
             var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(JsonConvert.SerializeObject(urls)));
             if (!responseMessage.IsSuccessStatusCode)
             {
