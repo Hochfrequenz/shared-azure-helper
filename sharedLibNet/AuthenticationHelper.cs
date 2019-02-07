@@ -266,6 +266,13 @@ namespace sharedLibNet
                 try
                 {
                     request.AddParameter("application/json", JsonConvert.SerializeObject(parameter), ParameterType.RequestBody);
+                }
+                catch (Exception e)
+                {
+                    throw new InvalidOperationException("Could not serialize object " + e.StackTrace);
+                }
+                try
+                {
                     IRestResponse response = await client.ExecuteTaskAsync(request);
                     if (log != null)
                     {
@@ -279,7 +286,7 @@ namespace sharedLibNet
                 }
                 catch (Exception e)
                 {
-                    throw new InvalidOperationException("Could not serialize object " + e.StackTrace);
+                    throw new InvalidOperationException("Could not ExecuteClientCall " + request);
                 }
             }
             catch (Exception e)
