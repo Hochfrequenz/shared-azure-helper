@@ -107,7 +107,7 @@ namespace sharedLibNet
                     //{
                     //    authHeader = AuthenticationHeaderValue.Parse(req.Headers[HeaderNames.Authorization]); ;
                     //}
-                   
+
 
                 }
                 catch (Exception) { }
@@ -231,31 +231,54 @@ namespace sharedLibNet
         }
         public async Task<string> AuthenticateWithToken(ILogger log = null)
         {
-            var client = new RestClient($"{AppConfiguration["ISSUER"]}oauth/token");
-            var request = new RestRequest(Method.POST);
-            request.AddHeader("content-type", "application/json");
-            JObject parameter = new JObject
+            try
             {
-                ["client_id"] = AppConfiguration["CLIENT_ID"],
-                ["client_secret"] = AppConfiguration["CLIENT_SECRET"],
-                ["audience"] = AppConfiguration["NEW_AUDIENCE"],
-                ["grant_type"] = "client_credentials"
-            };
-            if (log != null)
-            {
-                log.LogDebug($"Trying to get oauth token from {AppConfiguration["ISSUER"]}oauth/token with client id {AppConfiguration["CLIENT_ID"]} and audience {AppConfiguration["NEW_AUDIENCE"]}");
-            }
-            request.AddParameter("application/json", JsonConvert.SerializeObject(parameter), ParameterType.RequestBody);
-            IRestResponse response = await client.ExecuteTaskAsync(request);
-            if (log != null)
-            {
-                log.LogDebug($"Oauth response status code: {response.StatusCode}");
-                if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                if (String.IsNullOrEmpty(AppConfiguration["ISSUER"]))
                 {
-                    log.LogDebug($"Oauth status code not ok, reason:{response.Content}");
+                    throw new InvalidOperationException("Appconfiguration needs to include ISSUER");
                 }
+                if (String.IsNullOrEmpty(AppConfiguration["CLIENT_ID"]))
+                {
+                    throw new InvalidOperationException("Appconfiguration needs to include CLIENT_ID");
+                }
+                if (String.IsNullOrEmpty(AppConfiguration["CLIENT_SECRET"]))
+                {
+                    throw new InvalidOperationException("Appconfiguration needs to include CLIENT_SECRET");
+                }
+                if (String.IsNullOrEmpty(AppConfiguration["NEW_AUDIENCE"]))
+                {
+                    throw new InvalidOperationException("Appconfiguration needs to include CLIENT_SECRET");
+                }
+                var client = new RestClient($"{AppConfiguration["ISSUER"]}oauth/token");
+                var request = new RestRequest(Method.POST);
+                request.AddHeader("content-type", "application/json");
+                JObject parameter = new JObject
+                {
+                    ["client_id"] = AppConfiguration["CLIENT_ID"],
+                    ["client_secret"] = AppConfiguration["CLIENT_SECRET"],
+                    ["audience"] = AppConfiguration["NEW_AUDIENCE"],
+                    ["grant_type"] = "client_credentials"
+                };
+                if (log != null)
+                {
+                    log.LogDebug($"Trying to get oauth token from {AppConfiguration["ISSUER"]}oauth/token with client id {AppConfiguration["CLIENT_ID"]} and audience {AppConfiguration["NEW_AUDIENCE"]}");
+                }
+                request.AddParameter("application/json", JsonConvert.SerializeObject(parameter), ParameterType.RequestBody);
+                IRestResponse response = await client.ExecuteTaskAsync(request);
+                if (log != null)
+                {
+                    log.LogDebug($"Oauth response status code: {response.StatusCode}");
+                    if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                    {
+                        log.LogDebug($"Oauth status code not ok, reason:{response.Content}");
+                    }
+                }
+                return JsonConvert.DeserializeObject<JObject>(response.Content)["access_token"].Value<string>();
             }
-            return JsonConvert.DeserializeObject<JObject>(response.Content)["access_token"].Value<string>();
+            catch (Exception e)
+            {
+                throw new Exception("Could not authenticate with token", e);
+            }
         }
         public async Task<ClaimsPrincipal> ValidateTokenAsync(string value)
         {
