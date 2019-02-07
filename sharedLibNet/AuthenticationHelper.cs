@@ -271,22 +271,24 @@ namespace sharedLibNet
                 {
                     throw new InvalidOperationException("Could not serialize object " + e.StackTrace);
                 }
+
+                IRestResponse response = await client.ExecuteTaskAsync(request);
+                if (log != null)
+                {
+                    log.LogDebug($"Oauth response status code: {response.StatusCode}");
+                    if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                    {
+                        log.LogDebug($"Oauth status code not ok, reason:{response.Content}");
+                        return response.Content;
+                    }
+                }
                 try
                 {
-                    IRestResponse response = await client.ExecuteTaskAsync(request);
-                    if (log != null)
-                    {
-                        log.LogDebug($"Oauth response status code: {response.StatusCode}");
-                        if (response.StatusCode != System.Net.HttpStatusCode.OK)
-                        {
-                            log.LogDebug($"Oauth status code not ok, reason:{response.Content}");
-                        }
-                    }
                     return JsonConvert.DeserializeObject<JObject>(response.Content)["access_token"].Value<string>();
                 }
                 catch (Exception e)
                 {
-                    throw new InvalidOperationException("Could not ExecuteClientCall " + request);
+                    throw new InvalidOperationException("Could not ExecuteClientCall " + response);
                 }
             }
             catch (Exception e)
