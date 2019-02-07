@@ -261,7 +261,7 @@ namespace sharedLibNet
                 };
                 if (log != null)
                 {
-                    log.LogDebug($"Trying to get oauth token from {AppConfiguration["ISSUER"]}oauth/token with client id {AppConfiguration["CLIENT_ID"]} and audience {AppConfiguration["NEW_AUDIENCE"]}");
+                    log.LogInformation($"Trying to get oauth token from {AppConfiguration["ISSUER"]}oauth/token with client id {AppConfiguration["CLIENT_ID"]} and audience {AppConfiguration["NEW_AUDIENCE"]}");
                 }
                 try
                 {
@@ -279,7 +279,7 @@ namespace sharedLibNet
                     if (response.StatusCode != System.Net.HttpStatusCode.OK)
                     {
                         log.LogDebug($"Oauth status code not ok, reason:{response.Content}");
-                        return response.Content;
+                        return "Could not get token: " + response.StatusCode.ToString();
                     }
                 }
                 try
