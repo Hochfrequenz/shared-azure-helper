@@ -263,17 +263,24 @@ namespace sharedLibNet
                 {
                     log.LogDebug($"Trying to get oauth token from {AppConfiguration["ISSUER"]}oauth/token with client id {AppConfiguration["CLIENT_ID"]} and audience {AppConfiguration["NEW_AUDIENCE"]}");
                 }
-                request.AddParameter("application/json", JsonConvert.SerializeObject(parameter), ParameterType.RequestBody);
-                IRestResponse response = await client.ExecuteTaskAsync(request);
-                if (log != null)
+                try
                 {
-                    log.LogDebug($"Oauth response status code: {response.StatusCode}");
-                    if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                    request.AddParameter("application/json", JsonConvert.SerializeObject(parameter), ParameterType.RequestBody);
+                    IRestResponse response = await client.ExecuteTaskAsync(request);
+                    if (log != null)
                     {
-                        log.LogDebug($"Oauth status code not ok, reason:{response.Content}");
+                        log.LogDebug($"Oauth response status code: {response.StatusCode}");
+                        if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                        {
+                            log.LogDebug($"Oauth status code not ok, reason:{response.Content}");
+                        }
                     }
+                    return JsonConvert.DeserializeObject<JObject>(response.Content)["access_token"].Value<string>();
                 }
-                return JsonConvert.DeserializeObject<JObject>(response.Content)["access_token"].Value<string>();
+                catch (Exception e)
+                {
+                    throw new InvalidOperationException("Could not serialize object " + e.StackTrace);
+                }
             }
             catch (Exception e)
             {
