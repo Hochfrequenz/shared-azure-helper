@@ -223,8 +223,8 @@ namespace sharedLibNet
                 throw new Exception($"AuthService could not be reached:{response.StatusCode}");
             }
             if (!_certStrings.ContainsKey(target))
-            {
                 _certStrings.Add(target, response.Content);
+            {
             }
 
             return response.Content;
@@ -278,7 +278,7 @@ namespace sharedLibNet
                     log.LogDebug($"Oauth response status code: {response.StatusCode}");
                     if (response.StatusCode != System.Net.HttpStatusCode.OK)
                     {
-                        log.LogDebug($"Oauth status code not ok, reason:{response.Content}");
+                        log.LogInformation($"Oauth status code not ok, reason:{response.Content}");
                         return "Could not get token: " + response.StatusCode.ToString();
                     }
                 }
