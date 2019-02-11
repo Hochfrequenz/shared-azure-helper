@@ -115,15 +115,22 @@ namespace sharedLibNet
                 if (authHeader == null || authHeader.Scheme != "Bearer")
                 {
 
-                    if (req.Headers.ContainsKey("X-ARR-ClientCert"))
+                    if (req.Headers.ContainsKey("X-ARR-ClientCert") || req.Headers.ContainsKey("HF-ClientCert"))
                     {
+                        string certString = null;
                         try
                         {
 
+                            if (req.Headers.ContainsKey("X-ARR-ClientCert"))
+                                certString = req.Headers["X-ARR-ClientCert"];
+                            else if (req.Headers.ContainsKey("HF-ClientCert"))
+                            {
+                                certString = req.Headers["HF-ClientCert"];
+                            }
                             byte[] clientCertBytes = null;
                             using (MiniProfiler.Current.Step("Decoding string"))
                             {
-                                clientCertBytes = Convert.FromBase64String(req.Headers["X-ARR-ClientCert"]);
+                                clientCertBytes = Convert.FromBase64String(certString);
                             }
                             X509Certificate2 clientCert = null;
                             using (MiniProfiler.Current.Step("DecodingCert"))
@@ -160,7 +167,7 @@ namespace sharedLibNet
                         }
                         catch (Exception e)
                         {
-                            log.LogCritical($"Could not parse Certificate: {req.Headers["X-ARR-ClientCert"]} : {e.ToString()}");
+                            log.LogCritical($"Could not parse Certificate: {certString} : {e.ToString()}");
 
                             return false;
                         }
