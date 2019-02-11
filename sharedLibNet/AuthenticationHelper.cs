@@ -98,9 +98,16 @@ namespace sharedLibNet
                 {
                     using (MiniProfiler.Current.Step("Reading header - alternative Version"))
                     {
-                        if (req.Headers.TryGetValue("Authorization", out var authHeaders))
+                        if (req.Headers.TryGetValue("HF-Authorization", out var hfauthHeaders))
                         {
-                            authHeader = new AuthenticationHeaderValue(null, authHeaders.FirstOrDefault());
+                            authHeader = new AuthenticationHeaderValue(null, hfauthHeaders.FirstOrDefault());
+                        }
+                        if (authHeader != null)
+                        {
+                            if (req.Headers.TryGetValue("Authorization", out var authHeaders))
+                            {
+                                authHeader = new AuthenticationHeaderValue(null, authHeaders.FirstOrDefault());
+                            }
                         }
                     }
                     //using (MiniProfiler.Current.Step("Reading header"))
@@ -224,6 +231,7 @@ namespace sharedLibNet
                 request.AddHeader("Ocp-Apim-Subscription-Key", AppConfiguration["API_KEY"]);
             }
             request.AddHeader("Authorization", "Bearer " + _accessToken);
+            request.AddHeader("HF-Authorization", "Bearer " + _accessToken);
             IRestResponse response = await authClient.ExecuteTaskAsync(request);
             if (response.IsSuccessful == false)
             {
