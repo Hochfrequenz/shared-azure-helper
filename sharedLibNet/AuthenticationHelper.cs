@@ -93,20 +93,26 @@ namespace sharedLibNet
             using (MiniProfiler.Current.Step("CheckingAuth"))
             {
                 ClaimsPrincipal principal;
-                AuthenticationHeaderValue authHeader = null;
+                List<AuthenticationHeaderValue> authHeader = new List<AuthenticationHeaderValue>();
                 try
                 {
                     using (MiniProfiler.Current.Step("Reading header - alternative Version"))
                     {
                         if (req.Headers.TryGetValue("HF-Authorization", out var hfauthHeaders))
                         {
-                            authHeader = new AuthenticationHeaderValue(null, hfauthHeaders.FirstOrDefault());
+                            foreach (var header in hfauthHeaders)
+                            {
+                                authHeader.Add(AuthenticationHeaderValue.Parse(header));
+                            }
                         }
                         if (authHeader != null)
                         {
                             if (req.Headers.TryGetValue("Authorization", out var authHeaders))
                             {
-                                authHeader = new AuthenticationHeaderValue(null, authHeaders.FirstOrDefault());
+                                foreach (var header in authHeaders)
+                                {
+                                    authHeader.Add(AuthenticationHeaderValue.Parse(header));
+                                }
                             }
                         }
                     }
@@ -118,10 +124,8 @@ namespace sharedLibNet
 
                 }
                 catch (Exception) { }
-
-                if (authHeader == null || authHeader.Scheme != "Bearer")
+                if (authHeader.Count == 0 || authHeader.Where(head => head.Scheme == "Bearer").Count() == 0)
                 {
-
                     if (req.Headers.ContainsKey("X-ARR-ClientCert") || req.Headers.ContainsKey("HF-ClientCert"))
                     {
                         string certString = null;
@@ -185,12 +189,22 @@ namespace sharedLibNet
                         return false;
                     }
                 }
-                else if ((principal = await ValidateTokenAsync(authHeader.Parameter)) == null)
+                else
                 {
-                    log.LogCritical($"Token is invalid");
+                    foreach (var header in authHeader)
+                    {
+                        if ((principal = await ValidateTokenAsync(header.Parameter)) == null)
+                        {
+                            //try next token
+                            continue;
+                        }
+                        //token is valid
+                        return true;
+                    }
+                    //if we get here we haven't found a valid header
+                    log.LogCritical($"No valid token found");
                     return false;
                 }
-                return true;
             }
         }
         public async Task<string> AuthenticateWithCert(string target, bool overriding = false, ILogger log = null)
