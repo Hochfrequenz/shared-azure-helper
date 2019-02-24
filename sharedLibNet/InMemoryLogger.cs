@@ -1,9 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
-using sharedLibNet.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using Microsoft.Extensions.Logging;
+using sharedLibNet.Logging;
 
 namespace sharedLibNet
 {

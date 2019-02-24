@@ -1,4 +1,4 @@
-﻿// To parse this JSON data, add NuGet 'Newtonsoft.Json' then do:
+// To parse this JSON data, add NuGet 'Newtonsoft.Json' then do:
 //
 //    using ConfigurationService.Model;
 //
@@ -6,7 +6,6 @@
 
 namespace sharedLibNet.Model
 {
-    using System;
     using System.Collections.Generic;
 
     using System.Globalization;

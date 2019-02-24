@@ -1,18 +1,13 @@
-﻿using System;
-using System.Net.Http;
-using Microsoft.Azure.WebJobs.Host;
-using System.Text;
-using Newtonsoft.Json;
-using Microsoft.AspNetCore.Http;
-using Moq;
-using System.IO;
-using Microsoft.AspNetCore.Http.Internal;
+using System;
 using System.Collections.Generic;
-using Microsoft.Extensions.Primitives;
+using System.IO;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
-using sharedLibNet;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Primitives;
+using Moq;
 
 namespace sharedLibNet.Tests
 {

@@ -1,8 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Text;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace sharedLibNet.Logging
 {
