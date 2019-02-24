@@ -65,23 +65,23 @@ namespace sharedLibNet
         public static async Task<HttpResponseMessage> SendLogToServer(string URL, InMemoryLoggerProvider logger, string certificate)
         {
             var cert = certificate;
-            if (httpClient.DefaultRequestHeaders.Contains("X-ARR-ClientCert"))
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.XArrClientCert))
             {
-                httpClient.DefaultRequestHeaders.Remove("X-ARR-ClientCert");
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.XArrClientCert);
             }
 
-            httpClient.DefaultRequestHeaders.Add("X-ARR-ClientCert", cert);
+            httpClient.DefaultRequestHeaders.Add(CustomHeader.XArrClientCert, cert);
 
             return await httpClient.PostAsync(URL, new StringContent(JsonConvert.SerializeObject(logger.Messages)));
         }
         public static async Task<HttpResponseMessage> GetEventLogs(string URL, string certificate)
         {
             var cert = certificate;
-            if (httpClient.DefaultRequestHeaders.Contains("X-ARR-ClientCert"))
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.XArrClientCert))
             {
-                httpClient.DefaultRequestHeaders.Remove("X-ARR-ClientCert");
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.XArrClientCert);
             }
-            httpClient.DefaultRequestHeaders.Add("X-ARR-ClientCert", cert);
+            httpClient.DefaultRequestHeaders.Add(CustomHeader.XArrClientCert, cert);
 
             return await httpClient.GetAsync(URL);
         }
