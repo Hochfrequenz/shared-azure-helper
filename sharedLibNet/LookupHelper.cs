@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -18,19 +18,19 @@ namespace sharedLibNet
         public async Task<Dictionary<string, JArray>> RetrieveURLs(List<string> urls, string lookupURL, string clientCertString, string apiKey)
         {
 
-            if (httpClient.DefaultRequestHeaders.Contains("X-ARR-ClientCert"))
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.XArrClientCert))
             {
-                httpClient.DefaultRequestHeaders.Remove("X-ARR-ClientCert");
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.XArrClientCert);
             }
 
-            httpClient.DefaultRequestHeaders.Add("X-ARR-ClientCert", clientCertString);
-            if (httpClient.DefaultRequestHeaders.Contains("Ocp-Apim-Subscription-Key"))
+            httpClient.DefaultRequestHeaders.Add(CustomHeader.XArrClientCert, clientCertString);
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.OcpApimSubscriptionKey))
             {
-                httpClient.DefaultRequestHeaders.Remove("Ocp-Apim-Subscription-Key");
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.OcpApimSubscriptionKey);
             }
             if (!string.IsNullOrEmpty(apiKey))
             {
-                httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", apiKey);
+                httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, apiKey);
             }
             var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(JsonConvert.SerializeObject(urls)));
             if (!responseMessage.IsSuccessStatusCode)

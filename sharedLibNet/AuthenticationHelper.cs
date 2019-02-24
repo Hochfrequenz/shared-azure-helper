@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.IdentityModel.Tokens.Jwt;
@@ -40,7 +40,7 @@ namespace sharedLibNet
         }
         public async Task Configure(ILogger log = null)
         {
-            var issuer = AppConfiguration["ISSUER"];
+            var issuer = AppConfiguration[AppConfigurationKey.ISSUER];
 
             var documentRetriever = new HttpDocumentRetriever
             {
@@ -52,13 +52,13 @@ namespace sharedLibNet
                 new OpenIdConnectConfigurationRetriever(),
                 documentRetriever
             );
-            if (AppConfiguration["ACCESS_TOKEN"] != null)
+            if (AppConfiguration[AppConfigurationKey.ACCESS_TOKEN] != null)
             {
-                _accessToken = AppConfiguration["ACCESS_TOKEN"];
+                _accessToken = AppConfiguration[AppConfigurationKey.ACCESS_TOKEN];
             }
             else
             {
-                if (AppConfiguration["CLIENT_ID"] != null)
+                if (AppConfiguration[AppConfigurationKey.CLIENT_ID] != null)
                 {
                     if (log != null)
                     {
@@ -71,9 +71,9 @@ namespace sharedLibNet
         protected async Task GetFingerprints(ILogger log)
         {
             dynamic config = new ExpandoObject();
-            if (AppConfiguration["API_KEY"] != null)
+            if (AppConfiguration[AppConfigurationKey.API_KEY] != null)
             {
-                httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", AppConfiguration["API_KEY"]);
+                httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, AppConfiguration[AppConfigurationKey.API_KEY]);
             }
 
             var responseMessage = await httpClient.GetAsync(_authURL + "/fingerprints");
@@ -97,7 +97,7 @@ namespace sharedLibNet
                 {
                     using (MiniProfiler.Current.Step("Reading header - alternative Version"))
                     {
-                        if (req.Headers.TryGetValue("HF-Authorization", out var hfauthHeaders))
+                        if (req.Headers.TryGetValue(CustomHeader.HfAuthorization, out var hfauthHeaders))
                         {
                             foreach (var header in hfauthHeaders)
                             {
@@ -106,7 +106,7 @@ namespace sharedLibNet
                         }
                         if (authHeader != null)
                         {
-                            if (req.Headers.TryGetValue("Authorization", out var authHeaders))
+                            if (req.Headers.TryGetValue(CustomHeader.Authorization, out var authHeaders))
                             {
                                 foreach (var header in authHeaders)
                                 {
@@ -119,23 +119,23 @@ namespace sharedLibNet
                     //{
                     //    authHeader = AuthenticationHeaderValue.Parse(req.Headers[HeaderNames.Authorization]); ;
                     //}
-
-
                 }
                 catch (Exception) { }
                 if (authHeader.Count == 0 || authHeader.Where(head => head.Scheme == "Bearer").Count() == 0)
                 {
-                    if (req.Headers.ContainsKey("X-ARR-ClientCert") || req.Headers.ContainsKey("HF-ClientCert"))
+                    if (req.Headers.ContainsKey(CustomHeader.XArrClientCert) || req.Headers.ContainsKey(CustomHeader.HfClientCert))
                     {
                         string certString = null;
                         try
                         {
 
-                            if (req.Headers.ContainsKey("X-ARR-ClientCert"))
-                                certString = req.Headers["X-ARR-ClientCert"];
-                            else if (req.Headers.ContainsKey("HF-ClientCert"))
+                            if (req.Headers.ContainsKey(CustomHeader.XArrClientCert))
                             {
-                                certString = req.Headers["HF-ClientCert"];
+                                certString = req.Headers[CustomHeader.XArrClientCert];
+                            }
+                            else if (req.Headers.ContainsKey(CustomHeader.HfClientCert))
+                            {
+                                certString = req.Headers[CustomHeader.HfClientCert];
                             }
                             byte[] clientCertBytes = null;
                             using (MiniProfiler.Current.Step("Decoding string"))
@@ -227,32 +227,32 @@ namespace sharedLibNet
                 await Configure(log);
                 if (_accessToken == null)
                 {
-                    throw new Exception("Could not retrieve auth token. Is CLIENT_ID, CLIENT_SECRET and NEW_AUDIENCE set?");
+                    throw new Exception($"Could not retrieve auth token. Are {AppConfigurationKey.CLIENT_ID},  {AppConfigurationKey.CLIENT_SECRET} and {AppConfigurationKey.NEW_AUDIENCE} set?");
                 }
             }
 
             if (authClient == null)
             {
-                authClient = new RestClient($"{AppConfiguration["AUTH_URL"]}/authenticate");
+                authClient = new RestClient($"{AppConfiguration[AppConfigurationKey.AUTH_URL]}/authenticate");
             }
 
             var request = new RestRequest(Method.POST);
             request.AddHeader("X-Cert-For", target);
             request.AddHeader("X-Cert-From", CertIssuer);
-            if (AppConfiguration["API_KEY"] != null)
+            if (AppConfiguration[AppConfigurationKey.API_KEY] != null)
             {
-                request.AddHeader("Ocp-Apim-Subscription-Key", AppConfiguration["API_KEY"]);
+                request.AddHeader(CustomHeader.OcpApimSubscriptionKey, AppConfiguration[AppConfigurationKey.API_KEY]);
             }
-            request.AddHeader("Authorization", "Bearer " + _accessToken);
-            request.AddHeader("HF-Authorization", "Bearer " + _accessToken);
+            request.AddHeader(CustomHeader.Authorization, "Bearer " + _accessToken);
+            request.AddHeader(CustomHeader.HfAuthorization, "Bearer " + _accessToken);
             IRestResponse response = await authClient.ExecuteTaskAsync(request);
             if (response.IsSuccessful == false)
             {
                 throw new Exception($"AuthService could not be reached:{response.StatusCode}");
             }
             if (!_certStrings.ContainsKey(target))
-                _certStrings.Add(target, response.Content);
             {
+                _certStrings.Add(target, response.Content);
             }
 
             return response.Content;
@@ -261,35 +261,31 @@ namespace sharedLibNet
         {
             try
             {
-                if (String.IsNullOrEmpty(AppConfiguration["ISSUER"]))
+                foreach (string appConfKey in new HashSet<string>() {
+                    AppConfigurationKey.ISSUER,
+                    AppConfigurationKey.CLIENT_ID,
+                    AppConfigurationKey.CLIENT_SECRET,
+                    AppConfigurationKey.NEW_AUDIENCE
+                })
                 {
-                    throw new InvalidOperationException("Appconfiguration needs to include ISSUER");
+                    if (String.IsNullOrEmpty(AppConfiguration[appConfKey]))
+                    {
+                        throw new InvalidOperationException($"Appconfiguration needs to include {appConfKey}");
+                    }
                 }
-                if (String.IsNullOrEmpty(AppConfiguration["CLIENT_ID"]))
-                {
-                    throw new InvalidOperationException("Appconfiguration needs to include CLIENT_ID");
-                }
-                if (String.IsNullOrEmpty(AppConfiguration["CLIENT_SECRET"]))
-                {
-                    throw new InvalidOperationException("Appconfiguration needs to include CLIENT_SECRET");
-                }
-                if (String.IsNullOrEmpty(AppConfiguration["NEW_AUDIENCE"]))
-                {
-                    throw new InvalidOperationException("Appconfiguration needs to include CLIENT_SECRET");
-                }
-                var client = new RestClient($"{AppConfiguration["ISSUER"]}oauth/token");
+                var client = new RestClient($"{AppConfiguration[AppConfigurationKey.ISSUER]} oauth/token");
                 var request = new RestRequest(Method.POST);
                 request.AddHeader("content-type", "application/json");
                 JObject parameter = new JObject
                 {
-                    ["client_id"] = AppConfiguration["CLIENT_ID"],
-                    ["client_secret"] = AppConfiguration["CLIENT_SECRET"],
-                    ["audience"] = AppConfiguration["NEW_AUDIENCE"],
+                    ["client_id"] = AppConfiguration[AppConfigurationKey.CLIENT_ID],
+                    ["client_secret"] = AppConfiguration[AppConfigurationKey.CLIENT_SECRET],
+                    ["audience"] = AppConfiguration[AppConfigurationKey.NEW_AUDIENCE],
                     ["grant_type"] = "client_credentials"
                 };
                 if (log != null)
                 {
-                    log.LogInformation($"Trying to get oauth token from {AppConfiguration["ISSUER"]}oauth/token with client id {AppConfiguration["CLIENT_ID"]} and audience {AppConfiguration["NEW_AUDIENCE"]}");
+                    log.LogInformation($"Trying to get oauth token from {AppConfiguration[AppConfigurationKey.ISSUER]} oauth/token with client id {AppConfiguration["CLIENT_ID"]} and audience {AppConfiguration["NEW_AUDIENCE"]}");
                 }
                 try
                 {
@@ -335,8 +331,8 @@ namespace sharedLibNet
             TokenValidationParameters validationParameter = null;
             if (AppConfiguration["ISSUER"] != null)
             {
-                var issuer = AppConfiguration["ISSUER"];
-                var audience = AppConfiguration["AUDIENCE"];
+                var issuer = AppConfiguration[AppConfigurationKey.ISSUER];
+                var audience = AppConfiguration[AppConfigurationKey.AUDIENCE];
 
                 validationParameter = new TokenValidationParameters()
                 {

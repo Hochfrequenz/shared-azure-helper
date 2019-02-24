@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Dynamic;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -21,12 +21,12 @@ namespace sharedLibNet
             dynamic config = new ExpandoObject();
             config.client = client;
             config.app = app;
-            if (httpClient.DefaultRequestHeaders.Contains("X-ARR-ClientCert"))
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.XArrClientCert))
             {
-                httpClient.DefaultRequestHeaders.Remove("X-ARR-ClientCert");
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.XArrClientCert);
             }
 
-            httpClient.DefaultRequestHeaders.Add("X-ARR-ClientCert", clientCertString);
+            httpClient.DefaultRequestHeaders.Add(CustomHeader.XArrClientCert, clientCertString);
 
             var responseMessage = await httpClient.PostAsync(configURL, new StringContent(JsonConvert.SerializeObject(config)));
             if (!responseMessage.IsSuccessStatusCode)

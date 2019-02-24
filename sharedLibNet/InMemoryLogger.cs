@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Logging;
@@ -16,7 +16,13 @@ namespace sharedLibNet
 
         public List<LogMessage> Messages
         {
-            get { lock (_messages) return _messages.ToList(); }
+            get
+            {
+                lock (_messages)
+                {
+                    return _messages.ToList();
+                }
+            }
         }
 
         void IDisposable.Dispose() { }
@@ -29,13 +35,15 @@ namespace sharedLibNet
             {
                 Type = logLevel,
                 Timestamp = DateTimeOffset.UtcNow,
-                Message = formatter(state, exception) + ( exception == null ? "" : "\r\n" + exception ),
+                Message = formatter(state, exception) + (exception == null ? "" : "\r\n" + exception),
                 Category = categoryName,
                 EventId = eventId.Id,
             };
 
             lock (_messages)
+            {
                 _messages.Add(message);
+            }
         }
 
         private sealed class InMemoryLogger : ILogger
