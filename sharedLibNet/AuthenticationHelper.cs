@@ -82,6 +82,7 @@ namespace sharedLibNet
                 log.LogCritical($"Could not get fingerprints: {responseMessage.ReasonPhrase}");
                 var responseContent = await responseMessage.Content.ReadAsStringAsync();
                 log.LogCritical(responseContent);
+                // maybe the API_KEY is not part of your in your 'appsettings.json'?
                 return;
             }
             JObject returnObj = (JObject)JsonConvert.DeserializeObject(await responseMessage.Content.ReadAsStringAsync());
