@@ -88,11 +88,10 @@ namespace sharedLibNet
             JObject returnObj = (JObject)JsonConvert.DeserializeObject(await responseMessage.Content.ReadAsStringAsync());
             this.allowedCertificates = returnObj["fingerprints"].ToObject<List<string>>();
         }
-        public async Task<bool> Http_CheckAuth(HttpRequest req, ILogger log)
+        public async Task<ClaimsPrincipal> Http_CheckAuth(HttpRequest req, ILogger log)
         {
             using (MiniProfiler.Current.Step("CheckingAuth"))
             {
-                ClaimsPrincipal principal;
                 List<AuthenticationHeaderValue> authHeader = new List<AuthenticationHeaderValue>();
                 try
                 {
@@ -152,13 +151,13 @@ namespace sharedLibNet
                             if (CN != CertIssuer)
                             {
                                 log.LogCritical($"Certificate has wrong CN {CN} instead of {CertIssuer}");
-                                return false;
+                                return null;
                             }
                             using (MiniProfiler.Current.Step("CheckingFingerprint"))
                             {
                                 if (allowedCertificates != null && allowedCertificates.Contains(clientCert.Thumbprint))
                                 {
-                                    return true;
+                                    return null;
                                 }
                                 else
                                 {
@@ -166,12 +165,12 @@ namespace sharedLibNet
                                     await this.GetFingerprints(log);
                                     if (allowedCertificates != null && allowedCertificates.Contains(clientCert.Thumbprint))
                                     {
-                                        return true;
+                                        return new ClaimsPrincipal();
                                     }
                                     else
                                     {
                                         log.LogCritical("Cert is not allowed. Reject");
-                                        return false;
+                                        return null;
                                     }
                                 }
                             }
@@ -180,17 +179,18 @@ namespace sharedLibNet
                         {
                             log.LogCritical($"Could not parse Certificate: {certString} : {e.ToString()}");
 
-                            return false;
+                            return null;
                         }
                     }
                     else
                     {
                         log.LogCritical($"Client Cert header not given");
-                        return false;
+                        return null;
                     }
                 }
                 else
                 {
+                    ClaimsPrincipal principal;
                     foreach (var header in authHeader)
                     {
                         if ((principal = await ValidateTokenAsync(header.Parameter)) == null)
@@ -199,11 +199,11 @@ namespace sharedLibNet
                             continue;
                         }
                         //token is valid
-                        return true;
+                        return principal;
                     }
                     //if we get here we haven't found a valid header
                     log.LogCritical($"No valid token found");
-                    return false;
+                    return null;
                 }
             }
         }
