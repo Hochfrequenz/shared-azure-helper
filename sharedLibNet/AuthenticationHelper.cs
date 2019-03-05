@@ -313,7 +313,7 @@ namespace sharedLibNet
                 }
                 catch (Exception e)
                 {
-                    throw new InvalidOperationException("Could not ExecuteClientCall " + response);
+                    throw new InvalidOperationException("Could not ExecuteClientCall " + response.Content,e);
                 }
             }
             catch (Exception e)
