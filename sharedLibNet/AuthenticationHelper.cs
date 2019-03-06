@@ -274,7 +274,7 @@ namespace sharedLibNet
                         throw new InvalidOperationException($"Appconfiguration needs to include {appConfKey}");
                     }
                 }
-                var client = new RestClient($"{AppConfiguration[AppConfigurationKey.ISSUER]} oauth/token");
+                var client = new RestClient($"{AppConfiguration[AppConfigurationKey.ISSUER]}oauth/token");
                 var request = new RestRequest(Method.POST);
                 request.AddHeader("content-type", "application/json");
                 JObject parameter = new JObject
@@ -286,7 +286,8 @@ namespace sharedLibNet
                 };
                 if (log != null)
                 {
-                    log.LogInformation($"Trying to get oauth token from {AppConfiguration[AppConfigurationKey.ISSUER]} oauth/token with client id {AppConfiguration["CLIENT_ID"]} and audience {AppConfiguration["NEW_AUDIENCE"]}");
+                    log.LogInformation($"Trying to get oauth token from {AppConfiguration[AppConfigurationKey.ISSUER]}oauth/token with client id {AppConfiguration["CLIENT_ID"]} and audience {AppConfiguration["NEW_AUDIENCE"]}");
+                    log.LogInformation(JsonConvert.SerializeObject(parameter));
                 }
                 try
                 {
@@ -313,7 +314,7 @@ namespace sharedLibNet
                 }
                 catch (Exception e)
                 {
-                    throw new InvalidOperationException("Could not ExecuteClientCall " + response.Content,e);
+                    throw new InvalidOperationException("Could not ExecuteClientCall " + response.Content, e);
                 }
             }
             catch (Exception e)
