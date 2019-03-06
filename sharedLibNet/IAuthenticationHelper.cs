@@ -13,7 +13,7 @@ namespace sharedLibNet
         Task<string> AuthenticateWithCert(string target, bool overriding = false, ILogger log = null);
         Task<string> AuthenticateWithToken(ILogger log);
         Task Configure(ILogger log);
-        Task<ClaimsPrincipal> Http_CheckAuth(HttpRequest req, ILogger log);
-        Task<ClaimsPrincipal> ValidateTokenAsync(string value);
+        Task<AuthResult> Http_CheckAuth(HttpRequest req, ILogger log);
+        Task<AuthResult> ValidateTokenAsync(string value);
     }
 }

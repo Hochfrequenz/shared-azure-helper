@@ -21,6 +21,16 @@ using RestSharp;
 using StackExchange.Profiling;
 namespace sharedLibNet
 {
+    public class AuthResult
+    {
+        public ClaimsPrincipal Principal { get; private set; }
+        public SecurityToken TokenInfo { get; private set; }
+        public AuthResult(ClaimsPrincipal principal, SecurityToken tokenInfo)
+        {
+            this.Principal = principal;
+            this.TokenInfo = tokenInfo;
+        }
+    }
     public class AuthenticationHelper : IAuthenticationHelper
     {
         private IConfigurationManager<OpenIdConnectConfiguration> _configurationManager;
@@ -88,7 +98,7 @@ namespace sharedLibNet
             JObject returnObj = (JObject)JsonConvert.DeserializeObject(await responseMessage.Content.ReadAsStringAsync());
             this.allowedCertificates = returnObj["fingerprints"].ToObject<List<string>>();
         }
-        public async Task<ClaimsPrincipal> Http_CheckAuth(HttpRequest req, ILogger log)
+        public async Task<AuthResult> Http_CheckAuth(HttpRequest req, ILogger log)
         {
             using (MiniProfiler.Current.Step("CheckingAuth"))
             {
@@ -165,7 +175,7 @@ namespace sharedLibNet
                                     await this.GetFingerprints(log);
                                     if (allowedCertificates != null && allowedCertificates.Contains(clientCert.Thumbprint))
                                     {
-                                        return new ClaimsPrincipal();
+                                        return new AuthResult(null, null);
                                     }
                                     else
                                     {
@@ -190,7 +200,7 @@ namespace sharedLibNet
                 }
                 else
                 {
-                    ClaimsPrincipal principal;
+                    AuthResult principal;
                     foreach (var header in authHeader)
                     {
                         if ((principal = await ValidateTokenAsync(header.Parameter)) == null)
@@ -322,7 +332,7 @@ namespace sharedLibNet
                 throw new Exception("Could not authenticate with token", e);
             }
         }
-        public async Task<ClaimsPrincipal> ValidateTokenAsync(string value)
+        public async Task<AuthResult> ValidateTokenAsync(string value)
         {
             if (_configurationManager == null)
             {
@@ -368,13 +378,13 @@ namespace sharedLibNet
 
             ClaimsPrincipal result = null;
             var tries = 0;
-
+            SecurityToken token = null;
             while (result == null && tries <= 1)
             {
                 try
                 {
                     var handler = new JwtSecurityTokenHandler();
-                    result = handler.ValidateToken(value, validationParameter, out var token);
+                    result = handler.ValidateToken(value, validationParameter, out token);
                 }
                 catch (SecurityTokenSignatureKeyNotFoundException)
                 {
@@ -390,7 +400,7 @@ namespace sharedLibNet
                 }
             }
 
-            return result;
+            return new AuthResult(result, token);
         }
     }
 }
