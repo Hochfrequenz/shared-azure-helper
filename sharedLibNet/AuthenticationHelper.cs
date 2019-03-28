@@ -167,7 +167,7 @@ namespace sharedLibNet
                             {
                                 if (allowedCertificates != null && allowedCertificates.Contains(clientCert.Thumbprint))
                                 {
-                                    return null;
+                                    return new AuthResult(null, null);
                                 }
                                 else
                                 {
