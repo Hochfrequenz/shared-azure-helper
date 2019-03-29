@@ -58,6 +58,10 @@ namespace sharedLibNet.Model
 
         [JsonProperty("requirements", NullValueHandling = NullValueHandling.Ignore)]
         public Dictionary<string, object> Requirements { get; set; }
+
+        [JsonProperty("priority", NullValueHandling = NullValueHandling.Ignore)]
+        public int Priority { get; set; }
+
     }
 
     public partial class Configuration
