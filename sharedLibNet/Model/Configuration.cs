@@ -44,10 +44,21 @@ namespace sharedLibNet.Model
         [JsonProperty("name", NullValueHandling = NullValueHandling.Ignore)]
         public string Name { get; set; }
 
+        [JsonProperty("pipelines", NullValueHandling = NullValueHandling.Ignore)]
+        public Pipeline[] Pipelines { get; set; }
+    }
+    public partial class Pipeline
+    {
+        [JsonProperty("name", NullValueHandling = NullValueHandling.Ignore)]
+        public string Name { get; set; }
+        [JsonProperty("requirements", NullValueHandling = NullValueHandling.Ignore)]
+        public Dictionary<string, object> Requirements { get; set; }
+
+        [JsonProperty("priority", NullValueHandling = NullValueHandling.Ignore)]
+        public int Priority { get; set; }
         [JsonProperty("stages", NullValueHandling = NullValueHandling.Ignore)]
         public Stage[] Stages { get; set; }
     }
-
     public partial class Stage
     {
         [JsonProperty("name", NullValueHandling = NullValueHandling.Ignore)]
@@ -56,11 +67,7 @@ namespace sharedLibNet.Model
         [JsonProperty("properties", NullValueHandling = NullValueHandling.Ignore)]
         public Dictionary<string, object> Properties { get; set; }
 
-        [JsonProperty("requirements", NullValueHandling = NullValueHandling.Ignore)]
-        public Dictionary<string, object> Requirements { get; set; }
 
-        [JsonProperty("priority", NullValueHandling = NullValueHandling.Ignore)]
-        public int Priority { get; set; }
 
     }
 
