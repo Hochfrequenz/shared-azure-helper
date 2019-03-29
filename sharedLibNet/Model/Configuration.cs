@@ -55,6 +55,9 @@ namespace sharedLibNet.Model
 
         [JsonProperty("properties", NullValueHandling = NullValueHandling.Ignore)]
         public Dictionary<string, object> Properties { get; set; }
+
+        [JsonProperty("requirements", NullValueHandling = NullValueHandling.Ignore)]
+        public Dictionary<string, object> Requirements { get; set; }
     }
 
     public partial class Configuration
