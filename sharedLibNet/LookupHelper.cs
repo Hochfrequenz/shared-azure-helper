@@ -50,7 +50,7 @@ namespace sharedLibNet
                 httpClient.DefaultRequestHeaders.Remove(CustomHeader.Authorization);
             }
 
-            httpClient.DefaultRequestHeaders.Add(CustomHeader.Authorization, token);
+            httpClient.DefaultRequestHeaders.Add(CustomHeader.Authorization, "Bearer " + token);
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.OcpApimSubscriptionKey))
             {
                 httpClient.DefaultRequestHeaders.Remove(CustomHeader.OcpApimSubscriptionKey);
