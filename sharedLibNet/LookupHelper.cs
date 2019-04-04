@@ -69,7 +69,7 @@ namespace sharedLibNet
             }
             return JsonConvert.DeserializeObject<Dictionary<string, JArray>>(await responseMessage.Content.ReadAsStringAsync());
         }
-        public async Task<JObject> LookupJsonWithUserToken(string json, string lookupURL, string token, string apiKey)
+        public async Task<string> LookupJsonWithUserToken(string json, string lookupURL, string token, string apiKey)
         {
 
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.Authorization))
@@ -94,7 +94,7 @@ namespace sharedLibNet
                 _logger.LogCritical(responseContent);
                 return null;
             }
-            return JsonConvert.DeserializeObject<JObject>(await responseMessage.Content.ReadAsStringAsync());
+            return JsonConvert.DeserializeObject<string>(await responseMessage.Content.ReadAsStringAsync());
         }
     }
 }
