@@ -32,7 +32,7 @@ namespace sharedLibNet
             {
                 httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, apiKey);
             }
-            var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(JsonConvert.SerializeObject(urls)));
+            var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(JsonConvert.SerializeObject(urls), System.Text.UTF8Encoding.UTF8, "application/json"));
             if (!responseMessage.IsSuccessStatusCode)
             {
                 _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase}");
@@ -60,6 +60,33 @@ namespace sharedLibNet
                 httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, apiKey);
             }
             var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(JsonConvert.SerializeObject(urls), System.Text.UTF8Encoding.UTF8, "application/json"));
+            if (!responseMessage.IsSuccessStatusCode)
+            {
+                _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase}");
+                var responseContent = await responseMessage.Content.ReadAsStringAsync();
+                _logger.LogCritical(responseContent);
+                return null;
+            }
+            return JsonConvert.DeserializeObject<Dictionary<string, JArray>>(await responseMessage.Content.ReadAsStringAsync());
+        }
+        public async Task<Dictionary<string, JArray>> LookupJsonWithUserToken(string json, string lookupURL, string token, string apiKey)
+        {
+
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.Authorization))
+            {
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.Authorization);
+            }
+
+            httpClient.DefaultRequestHeaders.Add(CustomHeader.Authorization, "Bearer " + token);
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.OcpApimSubscriptionKey))
+            {
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.OcpApimSubscriptionKey);
+            }
+            if (!string.IsNullOrEmpty(apiKey))
+            {
+                httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, apiKey);
+            }
+            var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(json, System.Text.UTF8Encoding.UTF8, "application/json"));
             if (!responseMessage.IsSuccessStatusCode)
             {
                 _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase}");
