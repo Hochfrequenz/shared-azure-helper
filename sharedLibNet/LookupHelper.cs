@@ -42,5 +42,32 @@ namespace sharedLibNet
             }
             return JsonConvert.DeserializeObject<Dictionary<string, JArray>>(await responseMessage.Content.ReadAsStringAsync());
         }
+        public async Task<Dictionary<string, JArray>> RetrieveURLsWithUserToken(List<string> urls, string lookupURL, string token, string apiKey)
+        {
+
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.Authorization))
+            {
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.Authorization);
+            }
+
+            httpClient.DefaultRequestHeaders.Add(CustomHeader.Authorization, token);
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.OcpApimSubscriptionKey))
+            {
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.OcpApimSubscriptionKey);
+            }
+            if (!string.IsNullOrEmpty(apiKey))
+            {
+                httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, apiKey);
+            }
+            var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(JsonConvert.SerializeObject(urls)));
+            if (!responseMessage.IsSuccessStatusCode)
+            {
+                _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase}");
+                var responseContent = await responseMessage.Content.ReadAsStringAsync();
+                _logger.LogCritical(responseContent);
+                return null;
+            }
+            return JsonConvert.DeserializeObject<Dictionary<string, JArray>>(await responseMessage.Content.ReadAsStringAsync());
+        }
     }
 }
