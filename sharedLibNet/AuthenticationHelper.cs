@@ -332,7 +332,7 @@ namespace sharedLibNet
                 throw new Exception("Could not authenticate with token", e);
             }
         }
-        public async Task<AuthResult> ValidateTokenAsync(string value)
+        public async Task<AuthResult> ValidateTokenAsync(string value, ILogger log = null)
         {
             if (_configurationManager == null)
             {
@@ -373,6 +373,10 @@ namespace sharedLibNet
             }
             else
             {
+                if (log != null)
+                {
+                    log.LogCritical("Please define either ISSUER and AUDIENCE or ISSUERS AND AUDIENCES");
+                }
                 throw new Exception("Please define either ISSUER and AUDIENCE or ISSUERS AND AUDIENCES");
             }
 
@@ -394,8 +398,12 @@ namespace sharedLibNet
                     _configurationManager.RequestRefresh();
                     tries++;
                 }
-                catch (SecurityTokenException)
+                catch (SecurityTokenException e)
                 {
+                    if (log != null)
+                    {
+                        log.LogCritical(e.Message);
+                    }
                     return null;
                 }
             }
