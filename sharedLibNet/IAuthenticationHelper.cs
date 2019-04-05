@@ -14,6 +14,6 @@ namespace sharedLibNet
         Task<string> AuthenticateWithToken(ILogger log);
         Task Configure(ILogger log);
         Task<AuthResult> Http_CheckAuth(HttpRequest req, ILogger log);
-        Task<AuthResult> ValidateTokenAsync(string value);
+        Task<AuthResult> ValidateTokenAsync(string value, ILogger log = null);
     }
 }
