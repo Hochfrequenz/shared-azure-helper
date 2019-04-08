@@ -31,6 +31,7 @@ namespace sharedLibNet
             this.TokenInfo = tokenInfo;
         }
     }
+
     public class AuthenticationHelper : IAuthenticationHelper
     {
         private IConfigurationManager<OpenIdConnectConfiguration> _configurationManager;
@@ -42,12 +43,14 @@ namespace sharedLibNet
         protected HttpClient httpClient = new HttpClient();
         protected string _authURL;
         public RestClient authClient = null;
+
         public AuthenticationHelper(string certIssuer, string authURL, IConfiguration config)
         {
             _authURL = authURL;
             CertIssuer = certIssuer;
             AppConfiguration = config;
         }
+
         public async Task Configure(ILogger log = null)
         {
             var issuer = AppConfiguration[AppConfigurationKey.ISSUER];
@@ -78,6 +81,7 @@ namespace sharedLibNet
                 }
             }
         }
+
         protected async Task GetFingerprints(ILogger log)
         {
             dynamic config = new ExpandoObject();
@@ -98,6 +102,7 @@ namespace sharedLibNet
             JObject returnObj = (JObject)JsonConvert.DeserializeObject(await responseMessage.Content.ReadAsStringAsync());
             this.allowedCertificates = returnObj["fingerprints"].ToObject<List<string>>();
         }
+
         public async Task<AuthResult> Http_CheckAuth(HttpRequest req, ILogger log)
         {
             using (MiniProfiler.Current.Step("CheckingAuth"))
@@ -218,6 +223,7 @@ namespace sharedLibNet
                 }
             }
         }
+
         public async Task<string> AuthenticateWithCert(string target, bool overriding = false, ILogger log = null)
         {
             if (!overriding && _certStrings.ContainsKey(target))
@@ -269,6 +275,7 @@ namespace sharedLibNet
 
             return response.Content;
         }
+
         public async Task<string> AuthenticateWithToken(ILogger log = null)
         {
             try
@@ -333,6 +340,7 @@ namespace sharedLibNet
                 throw new Exception("Could not authenticate with token", e);
             }
         }
+
         public async Task<AuthResult> ValidateTokenAsync(string value, ILogger log = null)
         {
             if (_configurationManager == null)
@@ -341,7 +349,7 @@ namespace sharedLibNet
             }
 
             var config = await _configurationManager.GetConfigurationAsync(CancellationToken.None);
-            TokenValidationParameters validationParameter = null;
+            TokenValidationParameters validationParameter;
             if (AppConfiguration["ISSUER"] != null)
             {
                 var issuer = AppConfiguration[AppConfigurationKey.ISSUER];
@@ -406,6 +414,14 @@ namespace sharedLibNet
                         log.LogCritical(e.Message);
                     }
                     return null;
+                }
+                catch (ArgumentException e)
+                {
+                    if (log != null)
+                    {
+                        log.LogCritical($"ArgumentException while Validating Token: '{e.Message}'; Seems like the value '{value}' is corrupted, incomplete or malformed.");
+                    }
+                    throw e;
                 }
             }
 
