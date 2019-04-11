@@ -25,10 +25,13 @@ namespace sharedLibNet
     {
         public ClaimsPrincipal Principal { get; private set; }
         public SecurityToken TokenInfo { get; private set; }
-        public AuthResult(ClaimsPrincipal principal, SecurityToken tokenInfo)
+
+        public string Token { get; private set; }
+        public AuthResult(ClaimsPrincipal principal, SecurityToken tokenInfo, string token)
         {
             this.Principal = principal;
             this.TokenInfo = tokenInfo;
+            this.Token = token;
         }
     }
     public class AuthenticationHelper : IAuthenticationHelper
@@ -167,7 +170,7 @@ namespace sharedLibNet
                             {
                                 if (allowedCertificates != null && allowedCertificates.Contains(clientCert.Thumbprint))
                                 {
-                                    return new AuthResult(null, null);
+                                    return new AuthResult(null, null, null);
                                 }
                                 else
                                 {
@@ -175,7 +178,7 @@ namespace sharedLibNet
                                     await this.GetFingerprints(log);
                                     if (allowedCertificates != null && allowedCertificates.Contains(clientCert.Thumbprint))
                                     {
-                                        return new AuthResult(null, null);
+                                        return new AuthResult(null, null, null);
                                     }
                                     else
                                     {
@@ -409,7 +412,7 @@ namespace sharedLibNet
                 }
             }
 
-            return new AuthResult(result, token);
+            return new AuthResult(result, token,value);
         }
     }
 }
