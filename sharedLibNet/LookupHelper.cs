@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Dynamic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -40,7 +41,9 @@ namespace sharedLibNet
             {
                 httpClient.DefaultRequestHeaders.Add(CustomHeader.BackendId, backendId);
             }
-            var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(JsonConvert.SerializeObject(urls), System.Text.UTF8Encoding.UTF8, "application/json"));
+            dynamic urlObject = new ExpandoObject();
+            urlObject.uris = urls;
+            var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(JsonConvert.SerializeObject(urlObject), System.Text.UTF8Encoding.UTF8, "application/json"));
             if (!responseMessage.IsSuccessStatusCode)
             {
                 _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase}");
@@ -75,7 +78,9 @@ namespace sharedLibNet
             {
                 httpClient.DefaultRequestHeaders.Add(CustomHeader.BackendId, backendId);
             }
-            var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(JsonConvert.SerializeObject(urls), System.Text.UTF8Encoding.UTF8, "application/json"));
+            dynamic urlObject = new ExpandoObject();
+            urlObject.uris = urls;
+            var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(JsonConvert.SerializeObject(urlObject), System.Text.UTF8Encoding.UTF8, "application/json"));
             if (!responseMessage.IsSuccessStatusCode)
             {
                 _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase}");
