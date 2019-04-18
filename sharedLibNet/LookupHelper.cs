@@ -51,7 +51,7 @@ namespace sharedLibNet
                 _logger.LogCritical(responseContent);
                 return null;
             }
-            return JsonConvert.DeserializeObject<Dictionary<string, JArray>>(await responseMessage.Content.ReadAsStringAsync());
+            return (JsonConvert.DeserializeObject<JObject>(await responseMessage.Content.ReadAsStringAsync()))["result"]?.Value<Dictionary<string, JArray>>();
         }
         public async Task<Dictionary<string, JArray>> RetrieveURLsWithUserToken(List<string> urls, string lookupURL, string token, string apiKey, string backendId)
         {
@@ -88,7 +88,7 @@ namespace sharedLibNet
                 _logger.LogCritical(responseContent);
                 return null;
             }
-            return JsonConvert.DeserializeObject<Dictionary<string, JArray>>(await responseMessage.Content.ReadAsStringAsync());
+            return (JsonConvert.DeserializeObject<JObject>(await responseMessage.Content.ReadAsStringAsync()))["result"]?.Value<Dictionary<string, JArray>>();
         }
         public async Task<string> LookupJsonWithUserToken(string json, string lookupURL, string token, string apiKey, string backendId)
         {
