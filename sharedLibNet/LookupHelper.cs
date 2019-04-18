@@ -90,14 +90,16 @@ namespace sharedLibNet
                 return null;
             }
             JObject resultObject = null;
+            JObject resultJObject = null;
             try
             {
                 resultObject = (JsonConvert.DeserializeObject<JObject>(await responseMessage.Content.ReadAsStringAsync()));
-                return resultObject["result"]?.Value<Dictionary<string, JArray>>();
+                resultJObject = resultObject["result"]?.Value<JObject>();
+                return resultJObject.Value<Dictionary<string, JArray>>();
             }
             catch (Exception e)
             {
-                throw new System.Exception($"Could not deserialize result from {JsonConvert.SerializeObject(resultObject)} ", e);
+                throw new System.Exception($"Could not deserialize result from {JsonConvert.SerializeObject(resultJObject)} ", e);
             }
         }
         public async Task<string> LookupJsonWithUserToken(string json, string lookupURL, string token, string apiKey, string backendId)
