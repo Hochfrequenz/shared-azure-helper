@@ -10,5 +10,6 @@
         public static readonly string HfClientCert = "HF-ClientCert";
         public static readonly string HfAuthorization = "HF-Authorization";
         public static readonly string Authorization = "Authorization";
+        public static readonly string BackendId  = "BOBackendId";
     }
 }

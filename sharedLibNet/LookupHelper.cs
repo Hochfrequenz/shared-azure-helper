@@ -15,7 +15,7 @@ namespace sharedLibNet
         {
             _logger = logger;
         }
-        public async Task<Dictionary<string, JArray>> RetrieveURLs(List<string> urls, string lookupURL, string clientCertString, string apiKey)
+        public async Task<Dictionary<string, JArray>> RetrieveURLs(List<string> urls, string lookupURL, string clientCertString, string apiKey, string backendId)
         {
 
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.XArrClientCert))
@@ -32,6 +32,14 @@ namespace sharedLibNet
             {
                 httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, apiKey);
             }
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.BackendId))
+            {
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.BackendId);
+            }
+            if (!string.IsNullOrEmpty(backendId))
+            {
+                httpClient.DefaultRequestHeaders.Add(CustomHeader.BackendId, backendId);
+            }
             var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(JsonConvert.SerializeObject(urls), System.Text.UTF8Encoding.UTF8, "application/json"));
             if (!responseMessage.IsSuccessStatusCode)
             {
@@ -42,7 +50,7 @@ namespace sharedLibNet
             }
             return JsonConvert.DeserializeObject<Dictionary<string, JArray>>(await responseMessage.Content.ReadAsStringAsync());
         }
-        public async Task<Dictionary<string, JArray>> RetrieveURLsWithUserToken(List<string> urls, string lookupURL, string token, string apiKey)
+        public async Task<Dictionary<string, JArray>> RetrieveURLsWithUserToken(List<string> urls, string lookupURL, string token, string apiKey, string backendId)
         {
 
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.Authorization))
@@ -59,6 +67,14 @@ namespace sharedLibNet
             {
                 httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, apiKey);
             }
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.BackendId))
+            {
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.BackendId);
+            }
+            if (!string.IsNullOrEmpty(backendId))
+            {
+                httpClient.DefaultRequestHeaders.Add(CustomHeader.BackendId, backendId);
+            }
             var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(JsonConvert.SerializeObject(urls), System.Text.UTF8Encoding.UTF8, "application/json"));
             if (!responseMessage.IsSuccessStatusCode)
             {
@@ -69,7 +85,7 @@ namespace sharedLibNet
             }
             return JsonConvert.DeserializeObject<Dictionary<string, JArray>>(await responseMessage.Content.ReadAsStringAsync());
         }
-        public async Task<string> LookupJsonWithUserToken(string json, string lookupURL, string token, string apiKey)
+        public async Task<string> LookupJsonWithUserToken(string json, string lookupURL, string token, string apiKey, string backendId)
         {
 
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.Authorization))
@@ -85,6 +101,14 @@ namespace sharedLibNet
             if (!string.IsNullOrEmpty(apiKey))
             {
                 httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, apiKey);
+            }
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.BackendId))
+            {
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.BackendId);
+            }
+            if (!string.IsNullOrEmpty(backendId))
+            {
+                httpClient.DefaultRequestHeaders.Add(CustomHeader.BackendId, backendId);
             }
             var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(json, System.Text.UTF8Encoding.UTF8, "application/json"));
             if (!responseMessage.IsSuccessStatusCode)
