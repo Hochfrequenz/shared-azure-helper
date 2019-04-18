@@ -17,7 +17,7 @@ namespace sharedLibNet
         {
             _logger = logger;
         }
-        public async Task<Dictionary<string, JArray>> RetrieveURLs(List<string> urls, string lookupURL, string clientCertString, string apiKey, string backendId)
+        public async Task<JObject> RetrieveURLs(List<string> urls, string lookupURL, string clientCertString, string apiKey, string backendId)
         {
 
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.XArrClientCert))
@@ -52,9 +52,18 @@ namespace sharedLibNet
                 _logger.LogCritical(responseContent);
                 return null;
             }
-            return (JsonConvert.DeserializeObject<JObject>(await responseMessage.Content.ReadAsStringAsync()))["result"]?.Value<Dictionary<string, JArray>>();
+            JObject resultObject = null;
+            try
+            {
+                resultObject = (JsonConvert.DeserializeObject<JObject>(await responseMessage.Content.ReadAsStringAsync()));
+                return resultObject["result"]?.Value<JObject>();
+            }
+            catch (Exception e)
+            {
+                throw new System.Exception($"Could not deserialize result from {JsonConvert.SerializeObject(resultObject)} ", e);
+            }
         }
-        public async Task<Dictionary<string, JArray>> RetrieveURLsWithUserToken(List<string> urls, string lookupURL, string token, string apiKey, string backendId)
+        public async Task<JObject> RetrieveURLsWithUserToken(List<string> urls, string lookupURL, string token, string apiKey, string backendId)
         {
 
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.Authorization))
@@ -90,16 +99,14 @@ namespace sharedLibNet
                 return null;
             }
             JObject resultObject = null;
-            JObject resultJObject = null;
             try
             {
                 resultObject = (JsonConvert.DeserializeObject<JObject>(await responseMessage.Content.ReadAsStringAsync()));
-                resultJObject = resultObject["result"]?.Value<JObject>();
-                return resultJObject.Value<Dictionary<string, JArray>>();
+                return resultObject["result"]?.Value<JObject>();
             }
             catch (Exception e)
             {
-                throw new System.Exception($"Could not deserialize result from {JsonConvert.SerializeObject(resultJObject)} ", e);
+                throw new System.Exception($"Could not deserialize result from {JsonConvert.SerializeObject(resultObject)} ", e);
             }
         }
         public async Task<string> LookupJsonWithUserToken(string json, string lookupURL, string token, string apiKey, string backendId)
