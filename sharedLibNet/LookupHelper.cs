@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Dynamic;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using BO4E.meta;
 using EshDataExchangeFormats.lookup;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace sharedLibNet
 {
@@ -20,9 +17,9 @@ namespace sharedLibNet
         {
             _logger = logger;
         }
-        public async Task<JObject> RetrieveURLs(List<string> urls, string lookupURL, string clientCertString, string apiKey, string backendId)
-        {
 
+        public async Task<GenericLookupResult> RetrieveURLs(IList<Bo4eUri> urls, Uri lookupURL, string clientCertString, string apiKey, BOBackendId backendId)
+        {
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.XArrClientCert))
             {
                 httpClient.DefaultRequestHeaders.Remove(CustomHeader.XArrClientCert);
@@ -41,13 +38,13 @@ namespace sharedLibNet
             {
                 httpClient.DefaultRequestHeaders.Remove(CustomHeader.BackendId);
             }
-            if (!string.IsNullOrEmpty(backendId))
-            {
-                httpClient.DefaultRequestHeaders.Add(CustomHeader.BackendId, backendId);
-            }
+            //if (!string.IsNullOrEmpty(backendId))
+            //{
+            httpClient.DefaultRequestHeaders.Add(CustomHeader.BackendId, backendId.ToString());
+            //}
             GenericLookupQuery urlObject = new GenericLookupQuery()
             {
-                uris = urls.Select(su => new Bo4eUri(su)).ToList<Bo4eUri>()
+                uris = urls
             };
             var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(JsonConvert.SerializeObject(urlObject), System.Text.UTF8Encoding.UTF8, "application/json"));
             if (!responseMessage.IsSuccessStatusCode)
@@ -57,18 +54,20 @@ namespace sharedLibNet
                 _logger.LogCritical(responseContent);
                 return null;
             }
-            JObject resultObject = null;
+            GenericLookupResult resultObject = null;
             try
             {
-                resultObject = (JsonConvert.DeserializeObject<JObject>(await responseMessage.Content.ReadAsStringAsync()));
-                return resultObject["result"]?.Value<JObject>();
+                resultObject = (JsonConvert.DeserializeObject<GenericLookupResult>(await responseMessage.Content.ReadAsStringAsync()));
+                return resultObject;
             }
             catch (Exception e)
             {
                 throw new Exception($"Could not de-serialize result from {JsonConvert.SerializeObject(resultObject)} ", e);
             }
         }
-        public async Task<JObject> RetrieveURLsWithUserToken(List<string> urls, string lookupURL, string token, string apiKey, string backendId)
+
+
+        public async Task<GenericLookupResult> RetrieveURLsWithUserToken(IList<Bo4eUri> urls, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
         {
 
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.Authorization))
@@ -89,14 +88,14 @@ namespace sharedLibNet
             {
                 httpClient.DefaultRequestHeaders.Remove(CustomHeader.BackendId);
             }
-            if (!string.IsNullOrEmpty(backendId))
-            {
-                httpClient.DefaultRequestHeaders.Add(CustomHeader.BackendId, backendId);
-            }
+            //if (!string.IsNullOrEmpty(backendId))
+            //{
+            httpClient.DefaultRequestHeaders.Add(CustomHeader.BackendId, backendId.ToString());
+            //}
 
             GenericLookupQuery urlObject = new GenericLookupQuery()
             {
-                uris = urls.Select(su => new Bo4eUri(su)).ToList<Bo4eUri>()
+                uris = urls
             };
 
             var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(JsonConvert.SerializeObject(urlObject), System.Text.UTF8Encoding.UTF8, "application/json"));
@@ -107,25 +106,34 @@ namespace sharedLibNet
                 _logger.LogCritical(responseContent);
                 return null;
             }
-            JObject resultObject = null;
+            GenericLookupResult resultObject = null;
             try
             {
-                resultObject = (JsonConvert.DeserializeObject<JObject>(await responseMessage.Content.ReadAsStringAsync()));
-                return resultObject["result"]?.Value<JObject>();
+                resultObject = (JsonConvert.DeserializeObject<GenericLookupResult>(await responseMessage.Content.ReadAsStringAsync()));
+                return resultObject;
             }
             catch (Exception e)
             {
-                throw new System.Exception($"Could not deserialize result from {JsonConvert.SerializeObject(resultObject)} ", e);
+                throw new System.Exception($"Could not de-serialise result from {JsonConvert.SerializeObject(resultObject)} ", e);
             }
         }
-        public async Task<string> LookupJsonWithUserToken(string json, string lookupURL, string token, string apiKey, string backendId)
-        {
 
+        /// <summary>
+        /// most generic call of the lookup service.
+        /// Posts the content from <paramref name="json"/> to the URL specified in <paramref name="lookupURL"/> using the token
+        /// </summary>
+        /// <param name="json">serialised lookup request</param>
+        /// <param name="lookupURL">URL of the lookup service</param>
+        /// <param name="token">token to authenticate</param>
+        /// <param name="apiKey">api key for gateway</param>
+        /// <param name="backendId">ID of Backend</param>
+        /// <returns></returns>
+        public async Task<string> LookupJsonWithUserToken(string json, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
+        {
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.Authorization))
             {
                 httpClient.DefaultRequestHeaders.Remove(CustomHeader.Authorization);
             }
-
             httpClient.DefaultRequestHeaders.Add(CustomHeader.Authorization, "Bearer " + token);
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.OcpApimSubscriptionKey))
             {
@@ -139,10 +147,10 @@ namespace sharedLibNet
             {
                 httpClient.DefaultRequestHeaders.Remove(CustomHeader.BackendId);
             }
-            if (!string.IsNullOrEmpty(backendId))
-            {
-                httpClient.DefaultRequestHeaders.Add(CustomHeader.BackendId, backendId);
-            }
+            //if (!string.IsNullOrEmpty(backendId))
+            //{
+            httpClient.DefaultRequestHeaders.Add(CustomHeader.BackendId, backendId.ToString());
+            //}
             var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(json, System.Text.UTF8Encoding.UTF8, "application/json"));
             if (!responseMessage.IsSuccessStatusCode)
             {
