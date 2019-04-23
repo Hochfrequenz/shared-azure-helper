@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using BO4E.meta;
+using EshDataExchangeFormats.lookup;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -42,8 +45,10 @@ namespace sharedLibNet
             {
                 httpClient.DefaultRequestHeaders.Add(CustomHeader.BackendId, backendId);
             }
-            dynamic urlObject = new ExpandoObject();
-            urlObject.uris = urls;
+            GenericLookupQuery urlObject = new GenericLookupQuery()
+            {
+                uris = urls.Select(su => new Bo4eUri(su)).ToList<Bo4eUri>()
+            };
             var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(JsonConvert.SerializeObject(urlObject), System.Text.UTF8Encoding.UTF8, "application/json"));
             if (!responseMessage.IsSuccessStatusCode)
             {
@@ -60,7 +65,7 @@ namespace sharedLibNet
             }
             catch (Exception e)
             {
-                throw new System.Exception($"Could not deserialize result from {JsonConvert.SerializeObject(resultObject)} ", e);
+                throw new Exception($"Could not de-serialize result from {JsonConvert.SerializeObject(resultObject)} ", e);
             }
         }
         public async Task<JObject> RetrieveURLsWithUserToken(List<string> urls, string lookupURL, string token, string apiKey, string backendId)
@@ -88,8 +93,12 @@ namespace sharedLibNet
             {
                 httpClient.DefaultRequestHeaders.Add(CustomHeader.BackendId, backendId);
             }
-            dynamic urlObject = new ExpandoObject();
-            urlObject.uris = urls;
+
+            GenericLookupQuery urlObject = new GenericLookupQuery()
+            {
+                uris = urls.Select(su => new Bo4eUri(su)).ToList<Bo4eUri>()
+            };
+
             var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(JsonConvert.SerializeObject(urlObject), System.Text.UTF8Encoding.UTF8, "application/json"));
             if (!responseMessage.IsSuccessStatusCode)
             {
