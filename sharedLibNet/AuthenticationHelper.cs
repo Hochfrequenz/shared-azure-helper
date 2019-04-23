@@ -428,7 +428,7 @@ namespace sharedLibNet
                 }
             }
 
-            return new AuthResult(result, token,value);
+            return new AuthResult(result, token, value);
         }
     }
 }

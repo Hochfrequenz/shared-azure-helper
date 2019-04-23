@@ -5,11 +5,11 @@
     /// </summary>
     public abstract class CustomHeader
     {
-        public static readonly string XArrClientCert = "X-ARR-ClientCert";
-        public static readonly string OcpApimSubscriptionKey = "Ocp-Apim-Subscription-Key";
-        public static readonly string HfClientCert = "HF-ClientCert";
-        public static readonly string HfAuthorization = "HF-Authorization";
-        public static readonly string Authorization = "Authorization";
-        public static readonly string BackendId  = "BOBackendId";
+        public const string XArrClientCert = "X-ARR-ClientCert";
+        public const string OcpApimSubscriptionKey = "Ocp-Apim-Subscription-Key";
+        public const string HfClientCert = "HF-ClientCert";
+        public const string HfAuthorization = "HF-Authorization";
+        public const string Authorization = "Authorization";
+        public const string BackendId = "BOBackendId";
     }
 }
