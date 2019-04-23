@@ -26,6 +26,7 @@ namespace sharedLibNet.DependencyInjection
             var _authHelper = new AuthenticationHelper(_authServiceName, config[EnvironmentVariableNames.ENV_AUTH_URL], config);
             var _raygun = new RaygunClient(config[EnvironmentVariableNames.ENV_RAYGUN_API_KEY]);
             services.AddSingleton<IAuthenticationHelper>(_authHelper);
+            services.AddSingleton<IConfiguration>(config);
             services.AddSingleton(_raygun);
             services.AddSingleton<HttpClient>();
         }
