@@ -13,18 +13,18 @@ namespace sharedLibNet.DependencyInjection
     public class CoreAppModule : Module
     {
         protected string _authServiceName;
-        public CoreAppModule(string authServiceName)
+        protected string _configName;
+        public CoreAppModule(string authServiceName, string configName = "local.settings.json")
         {
             this._authServiceName = authServiceName;
         }
         public override void Load(IServiceCollection services)
         {
             var config = new ConfigurationBuilder()
-                    .AddJsonFile("local.settings.json", optional: true, reloadOnChange: false)
+                    .AddJsonFile(_configName, optional: true, reloadOnChange: false)
                     .AddEnvironmentVariables()
                     .Build();
             var _authHelper = new AuthenticationHelper(_authServiceName, config[EnvironmentVariableNames.ENV_AUTH_URL], config);
-            _authHelper.AppConfiguration = config;
             var _raygun = new RaygunClient(config[EnvironmentVariableNames.ENV_RAYGUN_API_KEY]);
             services.AddSingleton<IAuthenticationHelper>(_authHelper);
             services.AddSingleton<IConfiguration>(config);
