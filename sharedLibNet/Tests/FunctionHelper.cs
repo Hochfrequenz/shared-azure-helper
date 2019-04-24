@@ -22,6 +22,12 @@ namespace sharedLibNet.Tests
             authMock.Setup<Task<AuthResult>>(auth => auth.Http_CheckAuth(It.IsAny<HttpRequest>(), It.IsAny<ILogger>())).Returns(Task.FromResult<AuthResult>(new AuthResult(null, null, null)));
             return authMock.Object;
         }
+        public IAuthenticationHelper CreateMockedNullAuth()
+        {
+            var authMock = new Mock<IAuthenticationHelper>();
+            authMock.Setup<Task<AuthResult>>(auth => auth.Http_CheckAuth(It.IsAny<HttpRequest>(), It.IsAny<ILogger>())).Returns(Task.FromResult<AuthResult>(null));
+            return authMock.Object;
+        }
         public HttpRequest Arrange(Dictionary<String, StringValues> query, HeaderDictionary headers, object content)
         {
             var reqMock = new Mock<HttpRequest>();
