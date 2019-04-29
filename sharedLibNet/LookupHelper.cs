@@ -117,7 +117,7 @@ namespace sharedLibNet
                 _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase} / {responseContent}; The original request was: {json} POSTed to {lookupURL}");
                 return null;
             }
-            return JsonConvert.DeserializeObject<string>(await responseMessage.Content.ReadAsStringAsync());
+            return await responseMessage.Content.ReadAsStringAsync();
         }
 
         private HttpClient RemoveAndReAddHeaders(string token, string apiKey, BOBackendId backendId)
