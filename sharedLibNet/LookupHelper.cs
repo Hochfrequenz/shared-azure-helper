@@ -63,6 +63,7 @@ namespace sharedLibNet
             }
             catch (Exception e)
             {
+                _logger.LogError($"Could not de-serialise result from {JsonConvert.SerializeObject(resultObject)}: {e.ToString()}");
                 throw new Exception($"Could not de-serialize result from {JsonConvert.SerializeObject(resultObject)} ", e);
             }
         }
@@ -91,7 +92,8 @@ namespace sharedLibNet
             }
             catch (Exception e)
             {
-                throw new System.Exception($"Could not de-serialise result from {JsonConvert.SerializeObject(resultObject)} ", e);
+                _logger.LogError($"Could not de-serialise result from {JsonConvert.SerializeObject(resultObject)}: {e.ToString()}");
+               throw new System.Exception($"Could not de-serialise result from {JsonConvert.SerializeObject(resultObject)} ", e);
             }
         }
 
