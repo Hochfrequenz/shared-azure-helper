@@ -26,7 +26,7 @@
   <ItemGroup>
     <PackageReference Include="Hochfrequenz.BO4E.Extensions.Encryption" Version="0.0.20" />
     <PackageReference Include="Hochfrequenz.BO4Enet" Version="0.0.114" />
-    <PackageReference Include="Hochfrequenz.BO4Enet.DataExchangeFormats" Version="0.0.9" />
+    <PackageReference Include="Hochfrequenz.BO4Enet.DataExchangeFormats" Version="0.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.3" />
