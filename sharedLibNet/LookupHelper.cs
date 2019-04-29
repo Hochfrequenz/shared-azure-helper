@@ -154,9 +154,8 @@ namespace sharedLibNet
             var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(json, System.Text.UTF8Encoding.UTF8, "application/json"));
             if (!responseMessage.IsSuccessStatusCode)
             {
-                _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase}");
-                var responseContent = await responseMessage.Content.ReadAsStringAsync();
-                _logger.LogCritical(responseContent);
+                string responseContent = await responseMessage.Content.ReadAsStringAsync();
+                _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase} / {responseContent}; The original request was: {json} POSTed to {lookupURL}");
                 return null;
             }
             return JsonConvert.DeserializeObject<string>(await responseMessage.Content.ReadAsStringAsync());
