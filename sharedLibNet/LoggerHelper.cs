@@ -95,6 +95,37 @@ namespace sharedLibNet
             httpClient.DefaultRequestHeaders.Add(CustomHeader.XArrClientCert, cert);
             return await httpClient.PostAsync(URL, new StringContent(JsonConvert.SerializeObject(logger.Messages)));
         }
+        /// <summary>
+        /// POSTs messages of <paramref name="logger"/> to server specified in <paramref name="URL"/>.  
+        /// </summary>
+        /// <param name="URL">Uri of the server</param>
+        /// <param name="logger">logger containing messages</param>
+        /// <param name="certificate">certificate used in HTTP POST header</param>
+        /// <returns>HttpClient response of POST</returns>
+        public static async Task<HttpResponseMessage> SendLogToServerWithToken(Uri URL, InMemoryLoggerProvider logger, string token,string apiKey)
+        {
+            
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.Authorization))
+            {
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.Authorization);
+            }
+            httpClient.DefaultRequestHeaders.Add(CustomHeader.Authorization, token );
+
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.HfAuthorization))
+            {
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.HfAuthorization);
+            }
+            httpClient.DefaultRequestHeaders.Add(CustomHeader.HfAuthorization, token);
+
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.OcpApimSubscriptionKey) && apiKey!=null)
+            {
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.OcpApimSubscriptionKey);
+            }
+            httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, apiKey);
+
+
+            return await httpClient.PostAsync(URL, new StringContent(JsonConvert.SerializeObject(logger.Messages)));
+        }
 
         [Obsolete("Please use GetEventLogs(Uri, ...) instead of GetEventLogs(string, ...).")]
         public static async Task<HttpResponseMessage> GetEventLogs(string URL, string certificate)
