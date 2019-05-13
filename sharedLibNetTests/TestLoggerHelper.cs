@@ -16,7 +16,7 @@ namespace sharedLibNetTests
         [Fact]
         public void TestLoggerBasic()
         {
-            var result = LoggerHelper.CreateLogger("Dei Mudder sein Service");
+            var result = LoggerHelper.CreateLogger("Dei Mudder sein Service", null, null);
             var logger = result.logger;
             var traceObject = LoggerHelper.CreateTraceObject("das ist ein test");
             logger.LogTrace(traceObject);
@@ -28,7 +28,7 @@ namespace sharedLibNetTests
         [Fact]
         public void TestLoggerEncryption()
         {
-            var result = LoggerHelper.CreateLogger("Deim Vadder sein Service");
+            var result = LoggerHelper.CreateLogger("Deim Vadder sein Service", null, null);
             var logger = result.logger;
             dynamic logResult = new ExpandoObject();
             bool exceptionThrown = false;

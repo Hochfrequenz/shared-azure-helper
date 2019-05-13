@@ -28,11 +28,14 @@ namespace sharedLibNet
         /// <returns>Tuple of logger and corresponding loggerProvider</returns>
         public static (ILogger logger, InMemoryLoggerProvider loggerProvider) CreateLogger(string serviceName, string logTopic, string logTopicKey)
         {
-            string topicEndpoint = logTopic;
-            string topicKey = logTopicKey;
-            _topicHostname = new Uri(topicEndpoint).Host;
-            TopicCredentials topicCredentials = new TopicCredentials(topicKey);
-            _eventGridClient = new EventGridClient(topicCredentials);
+            if (logTopic != null)
+            {
+                string topicEndpoint = logTopic;
+                string topicKey = logTopicKey;
+                _topicHostname = new Uri(topicEndpoint).Host;
+                TopicCredentials topicCredentials = new TopicCredentials(topicKey);
+                _eventGridClient = new EventGridClient(topicCredentials);
+            }
             var factory = new LoggerFactory();
             var loggerProvider = new InMemoryLoggerProvider();
             factory.AddProvider(loggerProvider);
