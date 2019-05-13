@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Dynamic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using BO4E.BO;
 using BO4E.Extensions.Encryption;
+using Microsoft.Azure.EventGrid;
+using Microsoft.Azure.EventGrid.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Sodium;
 
 namespace sharedLibNet
@@ -14,14 +18,21 @@ namespace sharedLibNet
     public class LoggerHelper
     {
         public static HttpClient httpClient = new HttpClient();
-
+        protected static EventGridClient _eventGridClient;
+        protected static string _topicHostname;
+        public static string LogEventName = "HF.EnergyCore.EventLog.Created";
         /// <summary>
         /// Creates a new logger and logger provider from a newly instantiated LoggerFactory.
         /// </summary>
         /// <param name="serviceName">name of the service. Is passed to the logger provider.</param>
         /// <returns>Tuple of logger and corresponding loggerProvider</returns>
-        public static (ILogger logger, InMemoryLoggerProvider loggerProvider) CreateLogger(string serviceName)
+        public static (ILogger logger, InMemoryLoggerProvider loggerProvider) CreateLogger(string serviceName, string logTopic, string logTopicKey)
         {
+            string topicEndpoint = logTopic;
+            string topicKey = logTopicKey;
+            _topicHostname = new Uri(topicEndpoint).Host;
+            TopicCredentials topicCredentials = new TopicCredentials(topicKey);
+            _eventGridClient = new EventGridClient(topicCredentials);
             var factory = new LoggerFactory();
             var loggerProvider = new InMemoryLoggerProvider();
             factory.AddProvider(loggerProvider);
@@ -102,14 +113,14 @@ namespace sharedLibNet
         /// <param name="logger">logger containing messages</param>
         /// <param name="certificate">certificate used in HTTP POST header</param>
         /// <returns>HttpClient response of POST</returns>
-        public static async Task<HttpResponseMessage> SendLogToServerWithToken(Uri URL, InMemoryLoggerProvider logger, string token,string apiKey)
+        public static async Task<HttpResponseMessage> SendLogToServerWithToken(Uri URL, InMemoryLoggerProvider logger, string token, string apiKey)
         {
-            
+
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.Authorization))
             {
                 httpClient.DefaultRequestHeaders.Remove(CustomHeader.Authorization);
             }
-            httpClient.DefaultRequestHeaders.Add(CustomHeader.Authorization, token );
+            httpClient.DefaultRequestHeaders.Add(CustomHeader.Authorization, token);
 
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.HfAuthorization))
             {
@@ -117,7 +128,7 @@ namespace sharedLibNet
             }
             httpClient.DefaultRequestHeaders.Add(CustomHeader.HfAuthorization, token);
 
-            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.OcpApimSubscriptionKey) && apiKey!=null)
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.OcpApimSubscriptionKey) && apiKey != null)
             {
                 httpClient.DefaultRequestHeaders.Remove(CustomHeader.OcpApimSubscriptionKey);
             }
@@ -126,7 +137,71 @@ namespace sharedLibNet
 
             return await httpClient.PostAsync(URL, new StringContent(JsonConvert.SerializeObject(logger.Messages)));
         }
+        public static async Task<string> SendLogEvent(string eventId, InMemoryLoggerProvider logger, string subjectPostfix)
+        {
+            string subject = "EventLog";
+            if (!String.IsNullOrEmpty(subjectPostfix))
+                subject += subjectPostfix;
+            try
+            {
+                List<EventGridEvent> eventList = new List<EventGridEvent>();
+                foreach (var msg in logger.Messages)
+                {
+                    dynamic eventData = new ExpandoObject();
+                    eventData.eventid = eventId;
+                    eventData.message = msg;
+                    var newId = Guid.NewGuid().ToString();
+                    eventList.Add(new EventGridEvent()
+                    {
+                        Id = newId,
+                        EventType = LogEventName,
+                        Data = eventData,
+                        EventTime = DateTime.Now,
+                        Subject = subject,
+                        DataVersion = "2.0"
+                    });
+                }
 
+                await _eventGridClient.PublishEventsAsync(_topicHostname, eventList);
+                return "OK";
+            }
+            catch (Exception exc)
+            {
+                return exc.ToString();
+            }
+        }
+        public static async Task<string> SendLogEventData(string eventId, JObject logData, string subjectPostfix)
+        {
+            string subject = "EventLog";
+            if (!String.IsNullOrEmpty(subjectPostfix))
+                subject += subjectPostfix;
+            try
+            {
+                List<EventGridEvent> eventList = new List<EventGridEvent>();
+                dynamic eventData = new ExpandoObject();
+                eventData.eventid = eventId;
+                eventData.logData = logData;
+
+                var newId = Guid.NewGuid().ToString();
+                eventList.Add(new EventGridEvent()
+                {
+                    Id = newId,
+                    EventType = LogEventName,
+                    Data = eventData,
+                    EventTime = DateTime.Now,
+                    Subject = subject,
+                    DataVersion = "2.0"
+                });
+
+
+                await _eventGridClient.PublishEventsAsync(_topicHostname, eventList);
+                return "OK";
+            }
+            catch (Exception exc)
+            {
+                return exc.ToString();
+            }
+        }
         [Obsolete("Please use GetEventLogs(Uri, ...) instead of GetEventLogs(string, ...).")]
         public static async Task<HttpResponseMessage> GetEventLogs(string URL, string certificate)
         {
