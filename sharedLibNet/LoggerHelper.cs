@@ -228,5 +228,27 @@ namespace sharedLibNet
             httpClient.DefaultRequestHeaders.Add(CustomHeader.XArrClientCert, cert);
             return await httpClient.GetAsync(URL);
         }
+        public static async Task<HttpResponseMessage> GetEventLogsWithToken(Uri URL, string token, string apiKey)
+        {
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.Authorization))
+            {
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.Authorization);
+            }
+            httpClient.DefaultRequestHeaders.Add(CustomHeader.Authorization, token);
+
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.HfAuthorization))
+            {
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.HfAuthorization);
+            }
+            httpClient.DefaultRequestHeaders.Add(CustomHeader.HfAuthorization, token);
+
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.OcpApimSubscriptionKey) && apiKey != null)
+            {
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.OcpApimSubscriptionKey);
+            }
+            httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, apiKey);
+
+            return await httpClient.GetAsync(URL);
+        }
     }
 }
