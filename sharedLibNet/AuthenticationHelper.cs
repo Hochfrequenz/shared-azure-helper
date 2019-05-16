@@ -106,7 +106,7 @@ namespace sharedLibNet
             this.allowedCertificates = returnObj["fingerprints"].ToObject<List<string>>();
         }
 
-        public async Task<AuthResult> Http_CheckAuth(HttpRequest req, ILogger log)
+        public async Task<AuthResult> Http_CheckAuth(HttpRequest req, ILogger log, string checkForAudience = null)
         {
             using (MiniProfiler.Current.Step("CheckingAuth"))
             {
@@ -212,7 +212,7 @@ namespace sharedLibNet
                     foreach (var header in authHeader)
                     {
                         log.LogDebug($"Trying to authenticate with header {header.Parameter}");
-                        if ((principal = await ValidateTokenAsync(header.Parameter, log)) == null)
+                        if ((principal = await ValidateTokenAsync(header.Parameter, log, checkForAudience)) == null)
                         {
                             //try next token
                             continue;
@@ -344,7 +344,7 @@ namespace sharedLibNet
             }
         }
 
-        public async Task<AuthResult> ValidateTokenAsync(string value, ILogger log = null)
+        public async Task<AuthResult> ValidateTokenAsync(string value, ILogger log = null, string checkForAudience = null)
         {
             if (_configurationManager == null)
             {
@@ -352,12 +352,14 @@ namespace sharedLibNet
             }
 
             var config = await _configurationManager.GetConfigurationAsync(CancellationToken.None);
+
             TokenValidationParameters validationParameter;
             if (AppConfiguration["ISSUER"] != null)
             {
                 var issuer = AppConfiguration[AppConfigurationKey.ISSUER];
                 var audience = AppConfiguration[AppConfigurationKey.AUDIENCE];
-
+                if (checkForAudience != null)
+                    audience = checkForAudience;
                 validationParameter = new TokenValidationParameters()
                 {
                     RequireSignedTokens = true,
