@@ -354,24 +354,42 @@ namespace sharedLibNet
             var config = await _configurationManager.GetConfigurationAsync(CancellationToken.None);
 
             TokenValidationParameters validationParameter;
+            
             if (AppConfiguration["ISSUER"] != null)
             {
                 var issuer = AppConfiguration[AppConfigurationKey.ISSUER];
                 var audience = AppConfiguration[AppConfigurationKey.AUDIENCE];
                 if (checkForAudience != null)
-                    audience = checkForAudience;
-                validationParameter = new TokenValidationParameters()
                 {
-                    RequireSignedTokens = true,
-                    ValidAudience = audience,
-                    ValidateAudience = true,
-                    ValidIssuer = issuer,
-                    ValidateIssuer = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidateLifetime = true,
-                    IssuerSigningKeys = config.SigningKeys
-                };
+                   
+                    validationParameter = new TokenValidationParameters()
+                    {
+                        RequireSignedTokens = true,
+                        ValidAudiences = new string[] { audience, checkForAudience },
+                        ValidateAudience = true,
+                        ValidIssuer = issuer,
+                        ValidateIssuer = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidateLifetime = true,
+                        IssuerSigningKeys = config.SigningKeys
+                    };
+                }
+                else
+                {
+                    validationParameter = new TokenValidationParameters()
+                    {
+                        RequireSignedTokens = true,
+                        ValidAudience = audience,
+                        ValidateAudience = true,
+                        ValidIssuer = issuer,
+                        ValidateIssuer = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidateLifetime = true,
+                        IssuerSigningKeys = config.SigningKeys
+                    };
+                }
             }
+            
             else if (AppConfiguration.GetSection("ISSUERS") != null)
             {
                 validationParameter = new TokenValidationParameters()
