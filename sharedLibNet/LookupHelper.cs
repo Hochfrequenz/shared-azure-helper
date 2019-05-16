@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Reflection;
 using System.Threading.Tasks;
 using BO4E.meta;
 using EshDataExchangeFormats.lookup;
@@ -24,20 +23,24 @@ namespace sharedLibNet
         {
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.XArrClientCert))
             {
+                _logger.LogDebug($"Removing {CustomHeader.XArrClientCert} header");
                 httpClient.DefaultRequestHeaders.Remove(CustomHeader.XArrClientCert);
             }
 
             httpClient.DefaultRequestHeaders.Add(CustomHeader.XArrClientCert, clientCertString);
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.OcpApimSubscriptionKey))
             {
+                _logger.LogDebug($"Removing {CustomHeader.OcpApimSubscriptionKey} header");
                 httpClient.DefaultRequestHeaders.Remove(CustomHeader.OcpApimSubscriptionKey);
             }
             if (!string.IsNullOrEmpty(apiKey))
             {
+                _logger.LogDebug($"Adding {CustomHeader.OcpApimSubscriptionKey} header");
                 httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, apiKey);
             }
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.BackendId))
             {
+                _logger.LogDebug($"Removing {CustomHeader.BackendId} header");
                 httpClient.DefaultRequestHeaders.Remove(CustomHeader.BackendId);
             }
             //if (!string.IsNullOrEmpty(backendId))
@@ -60,6 +63,7 @@ namespace sharedLibNet
             try
             {
                 resultObject = (JsonConvert.DeserializeObject<GenericLookupResult>(await responseMessage.Content.ReadAsStringAsync()));
+                _logger.LogDebug($"Successfully de-serialised as GenericLookupResult");
                 return resultObject;
             }
             catch (Exception e)
@@ -89,12 +93,13 @@ namespace sharedLibNet
             try
             {
                 resultObject = (JsonConvert.DeserializeObject<GenericLookupResult>(await responseMessage.Content.ReadAsStringAsync()));
+                _logger.LogDebug($"Successfully de-serialised as GenericLookupResult");
                 return resultObject;
             }
             catch (Exception e)
             {
                 _logger.LogError($"Could not de-serialise result from {JsonConvert.SerializeObject(resultObject)}: {e.ToString()}");
-               throw new System.Exception($"Could not de-serialise result from {JsonConvert.SerializeObject(resultObject)} ", e);
+                throw new System.Exception($"Could not de-serialise result from {JsonConvert.SerializeObject(resultObject)} ", e);
             }
         }
 
@@ -110,6 +115,7 @@ namespace sharedLibNet
         /// <returns></returns>
         public async Task<string> LookupJsonWithUserToken(string json, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
         {
+            _logger.LogDebug("LookupJsonWithUserToken");
             RemoveAndReAddHeaders(token, apiKey, backendId);
             var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(json, System.Text.UTF8Encoding.UTF8, "application/json"));
             if (!responseMessage.IsSuccessStatusCode)
@@ -118,11 +124,13 @@ namespace sharedLibNet
                 _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase} / {responseContent}; The original request was: {json} POSTed to {lookupURL}");
                 return null;
             }
+            _logger.LogDebug($"Sucessfully retrieved response with status code {responseMessage.StatusCode}");
             return await responseMessage.Content.ReadAsStringAsync();
         }
 
         private HttpClient RemoveAndReAddHeaders(string token, string apiKey, BOBackendId backendId)
         {
+            _logger.LogDebug("RemoveAndReAddHeaders");
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.Authorization))
             {
                 _logger.LogDebug($"Removing {CustomHeader.Authorization} header");
@@ -149,6 +157,7 @@ namespace sharedLibNet
             _logger.LogDebug($"Adding {CustomHeader.BackendId} header");
             httpClient.DefaultRequestHeaders.Add(CustomHeader.BackendId, backendId.ToString());
             //}
+            _logger.LogDebug("Removed and readded headers.");
             return httpClient;
         }
     }

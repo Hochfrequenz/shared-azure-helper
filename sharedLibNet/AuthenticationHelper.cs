@@ -90,15 +90,20 @@ namespace sharedLibNet
             dynamic config = new ExpandoObject();
             if (AppConfiguration[AppConfigurationKey.API_KEY] != null)
             {
+                log.LogDebug($"Adding {CustomHeader.OcpApimSubscriptionKey} from app configuration");
                 httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, AppConfiguration[AppConfigurationKey.API_KEY]);
             }
-
-            var responseMessage = await httpClient.GetAsync(_authURL + "/fingerprints");
+            Uri fingerPrintUrl = new Uri(_authURL + "/fingerprints");
+            HttpResponseMessage responseMessage;
+            using (MiniProfiler.Current.Step("Awaiting fingerprints"))
+            {
+                responseMessage = await httpClient.GetAsync(fingerPrintUrl);
+            }
             if (!responseMessage.IsSuccessStatusCode)
             {
-                log.LogCritical($"Could not get fingerprints: {responseMessage.ReasonPhrase}");
+                log.LogCritical($"Could not get fingerprints from {fingerPrintUrl}: {responseMessage.ReasonPhrase}; returning without setting allowedCertificates");
                 var responseContent = await responseMessage.Content.ReadAsStringAsync();
-                log.LogCritical(responseContent);
+                log.LogCritical($"The response content was {responseContent}");
                 // maybe the API_KEY is not part of your in your 'appsettings.json'?
                 return;
             }
@@ -138,7 +143,10 @@ namespace sharedLibNet
                     //    authHeader = AuthenticationHeaderValue.Parse(req.Headers[HeaderNames.Authorization]); ;
                     //}
                 }
-                catch (Exception) { }
+                catch (Exception e)
+                {
+                    log.LogWarning($"Exception in Authentication Helper Http_CheckAuth: {e}");
+                }
                 if (authHeader.Count == 0 || authHeader.Where(head => head.Scheme == "Bearer").Count() == 0)
                 {
                     if (req.Headers.ContainsKey(CustomHeader.XArrClientCert) || req.Headers.ContainsKey(CustomHeader.HfClientCert))
@@ -146,7 +154,6 @@ namespace sharedLibNet
                         string certString = null;
                         try
                         {
-
                             if (req.Headers.ContainsKey(CustomHeader.XArrClientCert))
                             {
                                 certString = req.Headers[CustomHeader.XArrClientCert];
@@ -187,7 +194,7 @@ namespace sharedLibNet
                                     }
                                     else
                                     {
-                                        log.LogCritical("Cert is not allowed. Reject");
+                                        log.LogCritical("Cert is not allowed. Reject; returning null");
                                         return null;
                                     }
                                 }
@@ -195,14 +202,13 @@ namespace sharedLibNet
                         }
                         catch (Exception e)
                         {
-                            log.LogCritical($"Could not parse Certificate: {certString} : {e.ToString()}");
-
+                            log.LogCritical($"Could not parse Certificate: certString = {certString}: Exception = {e}; returning null");
                             return null;
                         }
                     }
                     else
                     {
-                        log.LogCritical($"Client Cert header not given");
+                        log.LogCritical($"Client Cert header not given; returning null");
                         return null;
                     }
                 }
@@ -235,7 +241,6 @@ namespace sharedLibNet
                 {
                     log.LogDebug($"Certificate already in cache, returning {_certStrings[target]}");
                 }
-
                 return _certStrings[target];
             }
 
@@ -252,9 +257,11 @@ namespace sharedLibNet
                 }
             }
 
+            Uri authUrl = null;
             if (authClient == null)
             {
-                authClient = new RestClient($"{AppConfiguration[AppConfigurationKey.AUTH_URL]}/authenticate");
+                authUrl = new Uri($"{AppConfiguration[AppConfigurationKey.AUTH_URL]}/authenticate");
+                authClient = new RestClient(authUrl);
             }
 
             var request = new RestRequest(Method.POST);
@@ -269,13 +276,21 @@ namespace sharedLibNet
             IRestResponse response = await authClient.ExecuteTaskAsync(request);
             if (response.IsSuccessful == false)
             {
-                throw new Exception($"AuthService could not be reached:{response.StatusCode}");
+                string errorMessage = $"AuthService ({authUrl}) could not be reached: {response.StatusCode}";
+                if (log != null)
+                {
+                    log.LogCritical(errorMessage);
+                }
+                throw new Exception(errorMessage);
             }
             if (!_certStrings.ContainsKey(target))
             {
+                if (log != null)
+                {
+                    log.LogDebug($"adding {target} key from _certStrings");
+                }
                 _certStrings.Add(target, response.Content);
             }
-
             return response.Content;
         }
 
@@ -292,10 +307,16 @@ namespace sharedLibNet
                 {
                     if (String.IsNullOrEmpty(AppConfiguration[appConfKey]))
                     {
-                        throw new InvalidOperationException($"Appconfiguration needs to include {appConfKey}");
+                        string errorMessage = $"Appconfiguration needs to include {appConfKey}";
+                        if (log != null)
+                        {
+                            log.LogCritical(errorMessage);
+                        }
+                        throw new InvalidOperationException(errorMessage);
                     }
                 }
-                var client = new RestClient($"{AppConfiguration[AppConfigurationKey.ISSUER]}oauth/token");
+                Uri oauthTokenUri = new Uri($"{AppConfiguration[AppConfigurationKey.ISSUER]}oauth/token");
+                var client = new RestClient(oauthTokenUri);
                 var request = new RestRequest(Method.POST);
                 request.AddHeader("content-type", "application/json");
                 JObject parameter = new JObject
@@ -307,7 +328,7 @@ namespace sharedLibNet
                 };
                 if (log != null)
                 {
-                    log.LogInformation($"Trying to get oauth token from {AppConfiguration[AppConfigurationKey.ISSUER]}oauth/token with client id {AppConfiguration["CLIENT_ID"]} and audience {AppConfiguration["NEW_AUDIENCE"]}");
+                    log.LogInformation($"Trying to get oauth token from {oauthTokenUri} with client id {AppConfiguration["CLIENT_ID"]} and audience {AppConfiguration["NEW_AUDIENCE"]}");
                     log.LogInformation(JsonConvert.SerializeObject(parameter));
                 }
                 try
@@ -316,7 +337,12 @@ namespace sharedLibNet
                 }
                 catch (Exception e)
                 {
-                    throw new InvalidOperationException("Could not serialize object " + e.StackTrace);
+                    string errorMessage = $"Could not serialize object: {e}, {e.StackTrace}";
+                    if (log != null)
+                    {
+                        log.LogCritical(errorMessage);
+                    }
+                    throw new InvalidOperationException(errorMessage);
                 }
 
                 IRestResponse response = await client.ExecuteTaskAsync(request);
@@ -335,12 +361,22 @@ namespace sharedLibNet
                 }
                 catch (Exception e)
                 {
-                    throw new InvalidOperationException("Could not ExecuteClientCall " + response.Content, e);
+                    string errorMessage = "Could not ExecuteClientCall " + response.Content;
+                    if (log != null)
+                    {
+                        log.LogCritical(errorMessage);
+                    }
+                    throw new InvalidOperationException(errorMessage, e);
                 }
             }
             catch (Exception e)
             {
-                throw new Exception("Could not authenticate with token", e);
+                string errorMessage = $"Could not authenticate with token: {e}";
+                if (log != null)
+                {
+                    log.LogCritical(errorMessage);
+                }
+                throw new Exception(errorMessage, e);
             }
         }
 
@@ -434,7 +470,7 @@ namespace sharedLibNet
                 {
                     if (log != null)
                     {
-                        log.LogCritical(e.Message);
+                        log.LogCritical($"SecurityTokenException {e}; returning null");
                     }
                     return null;
                 }
@@ -447,7 +483,10 @@ namespace sharedLibNet
                     throw e;
                 }
             }
-
+            if (log != null)
+            {
+                log.LogDebug("returning auth result from ValidateTokenAsync");
+            }
             return new AuthResult(result, token, value);
         }
     }
