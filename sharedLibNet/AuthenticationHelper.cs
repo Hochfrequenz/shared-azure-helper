@@ -387,17 +387,29 @@ namespace sharedLibNet
                 await Configure();
             }
 
-            var config = await _configurationManager.GetConfigurationAsync(CancellationToken.None);
-
+            OpenIdConnectConfiguration config;
+            try
+            {
+                config = await _configurationManager.GetConfigurationAsync(CancellationToken.None);
+            }
+            catch (Exception e)
+            {
+                if (log != null)
+                {
+                    // especially with invalidOperationException
+                    log.LogError($"Exception while awaiting GetConfigurationAsync: {e}. Does the service have a stable internet connection?");
+                }
+                throw e;
+            }
             TokenValidationParameters validationParameter;
-            
+
             if (AppConfiguration["ISSUER"] != null)
             {
                 var issuer = AppConfiguration[AppConfigurationKey.ISSUER];
                 var audience = AppConfiguration[AppConfigurationKey.AUDIENCE];
                 if (checkForAudience != null)
                 {
-                   
+
                     validationParameter = new TokenValidationParameters()
                     {
                         RequireSignedTokens = true,
@@ -425,7 +437,7 @@ namespace sharedLibNet
                     };
                 }
             }
-            
+
             else if (AppConfiguration.GetSection("ISSUERS") != null)
             {
                 validationParameter = new TokenValidationParameters()
