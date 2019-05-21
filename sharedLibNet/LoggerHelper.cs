@@ -198,7 +198,7 @@ namespace sharedLibNet
 
 
                 await _eventGridClient.PublishEventsAsync(_topicHostname, eventList);
-                return "OK";
+                return newId;
             }
             catch (Exception exc)
             {
