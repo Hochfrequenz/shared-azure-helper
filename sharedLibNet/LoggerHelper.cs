@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Net.Http;
@@ -162,7 +162,7 @@ namespace sharedLibNet
                         Id = newId,
                         EventType = LogEventName,
                         Data = eventData,
-                        EventTime = DateTime.Now,
+                        EventTime = DateTime.UtcNow,
                         Subject = subject,
                         DataVersion = "2.0"
                     });
@@ -197,11 +197,10 @@ namespace sharedLibNet
                     Id = newId,
                     EventType = LogEventName,
                     Data = eventData,
-                    EventTime = DateTime.Now,
+                    EventTime = DateTime.UtcNow,
                     Subject = subject,
                     DataVersion = "2.0"
                 });
-
 
                 await _eventGridClient.PublishEventsAsync(_topicHostname, eventList);
                 return newId;
