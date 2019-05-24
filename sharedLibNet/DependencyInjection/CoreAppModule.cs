@@ -1,12 +1,8 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Net.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Mindscape.Raygun4Net.AspNetCore;
 using sharedLibNet.Helper;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net.Http;
-using System.Text;
 
 namespace sharedLibNet.DependencyInjection
 {

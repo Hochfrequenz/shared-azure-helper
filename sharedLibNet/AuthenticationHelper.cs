@@ -305,7 +305,7 @@ namespace sharedLibNet
                     AppConfigurationKey.NEW_AUDIENCE
                 })
                 {
-                    if (String.IsNullOrEmpty(AppConfiguration[appConfKey]))
+                    if (string.IsNullOrEmpty(AppConfiguration[appConfKey]))
                     {
                         string errorMessage = $"Appconfiguration needs to include {appConfKey}";
                         if (log != null)

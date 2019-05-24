@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace sharedLibNet.Helper
+﻿namespace sharedLibNet.Helper
 {
     public abstract class EnvironmentVariableNames
     {
