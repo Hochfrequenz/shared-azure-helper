@@ -145,7 +145,7 @@ namespace sharedLibNet
                 }
                 catch (Exception e)
                 {
-                    log.LogWarning($"Exception in Authentication Helper Http_CheckAuth: {e}");
+                    log.LogError($"Exception in Authentication Helper Http_CheckAuth: {e}");
                 }
                 if (authHeader.Count == 0 || authHeader.Where(head => head.Scheme == "Bearer").Count() == 0)
                 {
@@ -218,13 +218,22 @@ namespace sharedLibNet
                     foreach (var header in authHeader)
                     {
                         log.LogDebug($"Trying to authenticate with header {header.Parameter}");
-                        if ((principal = await ValidateTokenAsync(header.Parameter, log, checkForAudience)) == null)
+                        try
                         {
-                            //try next token
-                            continue;
+                            if ((principal = await ValidateTokenAsync(header.Parameter, log, checkForAudience)) == null)
+                            {
+                                //try next token
+                                continue;
+                            }
+                            //token is valid
+                            return principal;
                         }
-                        //token is valid
-                        return principal;
+                        catch (ArgumentException ae)
+                        {
+                            log.LogWarning($"Catched ArgumentException in ValidateTokenAsync. Probably due to malformed token: {ae.Message}. Returning null!");
+                            log.LogDebug($"The stacktrace of the ArgumentException is: {ae.StackTrace}");
+                            return null;
+                        }
                     }
                     //if we get here we haven't found a valid header
                     log.LogCritical($"No valid token found");
