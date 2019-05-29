@@ -137,6 +137,12 @@ namespace sharedLibNet
                 httpClient.DefaultRequestHeaders.Remove(CustomHeader.Authorization);
             }
             httpClient.DefaultRequestHeaders.Add(CustomHeader.Authorization, "Bearer " + token);
+            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.HfAuthorization))
+            {
+                _logger.LogDebug($"Removing {CustomHeader.HfAuthorization} header");
+                httpClient.DefaultRequestHeaders.Remove(CustomHeader.HfAuthorization);
+            }
+            httpClient.DefaultRequestHeaders.Add(CustomHeader.HfAuthorization, "Bearer " + token);
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.OcpApimSubscriptionKey))
             {
                 _logger.LogDebug($"Removing {CustomHeader.OcpApimSubscriptionKey} header");
