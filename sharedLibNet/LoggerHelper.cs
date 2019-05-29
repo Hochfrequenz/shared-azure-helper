@@ -20,7 +20,7 @@ namespace sharedLibNet
         public static HttpClient httpClient = new HttpClient();
         protected static EventGridClient _eventGridClient;
         protected static string _topicHostname;
-        public static string LogEventName = "HF.EnergyCore.EventLog.Created";
+        public const string LogEventName = "HF.EnergyCore.EventLog.Created";
         /// <summary>
         /// Creates a new logger and logger provider from a newly instantiated LoggerFactory.
         /// </summary>
@@ -84,7 +84,7 @@ namespace sharedLibNet
             return JsonConvert.SerializeObject(obj);
         }
 
-        [Obsolete("Please use SendToLogServer(Uri, ...) instead of SendToLogServer(string, ...).")]
+        [Obsolete("Please use SendToLogServer(Uri, ...) instead of SendToLogServer(string, ...).", true)]
         public static async Task<HttpResponseMessage> SendLogToServer(string URL, InMemoryLoggerProvider logger, string certificate)
         {
             Uri uri = new Uri(URL);
@@ -93,13 +93,13 @@ namespace sharedLibNet
 
 
         /// <summary>
-        /// POSTs messages of <paramref name="logger"/> to server specified in <paramref name="URL"/>.  
+        /// POSTs messages of <paramref name="logger"/> to server specified in <paramref name="url"/>.  
         /// </summary>
-        /// <param name="URL">Uri of the server</param>
+        /// <param name="url">Uri of the server</param>
         /// <param name="logger">logger containing messages</param>
         /// <param name="certificate">certificate used in HTTP POST header</param>
         /// <returns>HttpClient response of POST</returns>
-        public static async Task<HttpResponseMessage> SendLogToServer(Uri URL, InMemoryLoggerProvider logger, string certificate)
+        public static async Task<HttpResponseMessage> SendLogToServer(Uri url, InMemoryLoggerProvider logger, string certificate)
         {
             var cert = certificate;
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.XArrClientCert))
@@ -107,18 +107,18 @@ namespace sharedLibNet
                 httpClient.DefaultRequestHeaders.Remove(CustomHeader.XArrClientCert);
             }
             httpClient.DefaultRequestHeaders.Add(CustomHeader.XArrClientCert, cert);
-            return await httpClient.PostAsync(URL, new StringContent(JsonConvert.SerializeObject(logger.Messages)));
+            return await httpClient.PostAsync(url, new StringContent(JsonConvert.SerializeObject(logger.Messages)));
         }
+
         /// <summary>
-        /// POSTs messages of <paramref name="logger"/> to server specified in <paramref name="URL"/>.  
+        /// POSTs messages of <paramref name="logger"/> to server specified in <paramref name="url"/>.  
         /// </summary>
-        /// <param name="URL">Uri of the server</param>
+        /// <param name="url">Uri of the server</param>
         /// <param name="logger">logger containing messages</param>
         /// <param name="certificate">certificate used in HTTP POST header</param>
         /// <returns>HttpClient response of POST</returns>
-        public static async Task<HttpResponseMessage> SendLogToServerWithToken(Uri URL, InMemoryLoggerProvider logger, string token, string apiKey)
+        public static async Task<HttpResponseMessage> SendLogToServerWithToken(Uri url, InMemoryLoggerProvider logger, string token, string apiKey)
         {
-
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.Authorization))
             {
                 httpClient.DefaultRequestHeaders.Remove(CustomHeader.Authorization);
@@ -138,16 +138,19 @@ namespace sharedLibNet
             httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, apiKey);
 
 
-            return await httpClient.PostAsync(URL, new StringContent(JsonConvert.SerializeObject(logger.Messages)));
+            return await httpClient.PostAsync(url, new StringContent(JsonConvert.SerializeObject(logger.Messages)));
         }
+
         public static async Task<string> SendLogEvent(string eventId, InMemoryLoggerProvider logger, string subjectPostfix)
         {
             string subject = "EventLog";
-            if (!String.IsNullOrEmpty(subjectPostfix))
+            if (!string.IsNullOrEmpty(subjectPostfix))
+            {
                 subject += subjectPostfix;
+            }
             try
             {
-                List<EventGridEvent> eventList = new List<EventGridEvent>();
+                IList<EventGridEvent> eventList = new List<EventGridEvent>();
                 foreach (var msg in logger.Messages)
                 {
                     dynamic eventData = new ExpandoObject();
@@ -159,7 +162,7 @@ namespace sharedLibNet
                         Id = newId,
                         EventType = LogEventName,
                         Data = eventData,
-                        EventTime = DateTime.Now,
+                        EventTime = DateTime.UtcNow,
                         Subject = subject,
                         DataVersion = "2.0"
                     });
@@ -173,11 +176,14 @@ namespace sharedLibNet
                 return exc.ToString();
             }
         }
+
         public static async Task<string> SendLogEventData(string eventId, JObject logData, string subjectPostfix)
         {
             string subject = "EventLog";
-            if (!String.IsNullOrEmpty(subjectPostfix))
+            if (!string.IsNullOrEmpty(subjectPostfix))
+            {
                 subject += subjectPostfix;
+            }
             try
             {
                 List<EventGridEvent> eventList = new List<EventGridEvent>();
@@ -191,11 +197,10 @@ namespace sharedLibNet
                     Id = newId,
                     EventType = LogEventName,
                     Data = eventData,
-                    EventTime = DateTime.Now,
+                    EventTime = DateTime.UtcNow,
                     Subject = subject,
                     DataVersion = "2.0"
                 });
-
 
                 await _eventGridClient.PublishEventsAsync(_topicHostname, eventList);
                 return newId;
@@ -205,20 +210,21 @@ namespace sharedLibNet
                 return exc.ToString();
             }
         }
-        [Obsolete("Please use GetEventLogs(Uri, ...) instead of GetEventLogs(string, ...).")]
-        public static async Task<HttpResponseMessage> GetEventLogs(string URL, string certificate)
+
+        [Obsolete("Please use GetEventLogs(Uri, ...) instead of GetEventLogs(string, ...).", true)]
+        public static async Task<HttpResponseMessage> GetEventLogs(string url, string certificate)
         {
-            Uri uri = new Uri(URL);
+            Uri uri = new Uri(url);
             return await GetEventLogs(uri, certificate);
         }
 
         /// <summary>
         /// Reads events logs from server.
         /// </summary>
-        /// <param name="URL">URL of server the log messages are retrieved from</param>
+        /// <param name="url">URL of server the log messages are retrieved from</param>
         /// <param name="certificate">certificate used in HTTP GET header</param>
         /// <returns>HttpClient response of GET</returns>
-        public static async Task<HttpResponseMessage> GetEventLogs(Uri URL, string certificate)
+        public static async Task<HttpResponseMessage> GetEventLogs(Uri url, string certificate)
         {
             var cert = certificate;
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.XArrClientCert))
@@ -226,9 +232,10 @@ namespace sharedLibNet
                 httpClient.DefaultRequestHeaders.Remove(CustomHeader.XArrClientCert);
             }
             httpClient.DefaultRequestHeaders.Add(CustomHeader.XArrClientCert, cert);
-            return await httpClient.GetAsync(URL);
+            return await httpClient.GetAsync(url);
         }
-        public static async Task<HttpResponseMessage> GetEventLogsWithToken(Uri URL, string token, string apiKey)
+
+        public static async Task<HttpResponseMessage> GetEventLogsWithToken(Uri url, string token, string apiKey)
         {
             if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.Authorization))
             {
@@ -248,7 +255,7 @@ namespace sharedLibNet
             }
             httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, apiKey);
 
-            return await httpClient.GetAsync(URL);
+            return await httpClient.GetAsync(url);
         }
     }
 }

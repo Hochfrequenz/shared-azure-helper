@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using sharedLibNet.DependencyInjection.Interfaces;
 
 namespace sharedLibNet.DependencyInjection
@@ -11,7 +8,7 @@ namespace sharedLibNet.DependencyInjection
         public override void Load(IServiceCollection services)
         {
             base.Load(services);
-            
+
             services.AddTransient<IKeyVaultFunction, KeyVaultFunction>();
         }
     }

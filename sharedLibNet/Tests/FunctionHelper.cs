@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Internal;
@@ -19,7 +18,7 @@ namespace sharedLibNet.Tests
         public IAuthenticationHelper CreateMockedAuth()
         {
             var authMock = new Mock<IAuthenticationHelper>();
-            authMock.Setup<Task<AuthResult>>(auth => auth.Http_CheckAuth(It.IsAny<HttpRequest>(), It.IsAny<ILogger>(),It.IsAny<string>())).Returns(Task.FromResult<AuthResult>(new AuthResult(null, null, null)));
+            authMock.Setup<Task<AuthResult>>(auth => auth.Http_CheckAuth(It.IsAny<HttpRequest>(), It.IsAny<ILogger>(), It.IsAny<string>())).Returns(Task.FromResult<AuthResult>(new AuthResult(null, null, null)));
             return authMock.Object;
         }
         public IAuthenticationHelper CreateMockedNullAuth()

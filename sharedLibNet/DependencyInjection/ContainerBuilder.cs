@@ -1,8 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System;
+using Microsoft.Extensions.DependencyInjection;
 using sharedLibNet.DependencyInjection.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace sharedLibNet.DependencyInjection
 {

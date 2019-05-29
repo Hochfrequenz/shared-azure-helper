@@ -45,7 +45,7 @@ namespace sharedLibNet.Model
         public string Name { get; set; }
 
         [JsonProperty("pipelines", NullValueHandling = NullValueHandling.Ignore)]
-        public Dictionary<string,Pipeline> Pipelines { get; set; }
+        public Dictionary<string, Pipeline> Pipelines { get; set; }
     }
     public partial class Pipeline
     {
