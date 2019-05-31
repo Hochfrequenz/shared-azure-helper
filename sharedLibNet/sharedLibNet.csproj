@@ -5,7 +5,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Company>Hochfrequenz</Company>
     <PackageId>Hochfrequenz.sharedAzureHelper</PackageId>
-    <Version>0.0.30</Version>
+    <Version>0.0.31</Version>
     <Authors>Hochfrequenz</Authors>
     <Product>sharedAzureHelper</Product>
     <PackageProjectUrl>https://github.com/Hochfrequenz/shared-azure-helper</PackageProjectUrl>
@@ -19,8 +19,8 @@
     <!-- Optional: Include PDB in the built .nupkg -->
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <Description>Helper classes to interact with Hochfrequenzes azure services</Description>
-    <AssemblyVersion>0.0.30.0</AssemblyVersion>
-    <FileVersion>0.0.30.0</FileVersion>
+    <AssemblyVersion>0.0.31.0</AssemblyVersion>
+    <FileVersion>0.0.31.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,11 +30,13 @@
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.Azure.EventGrid" Version="3.1.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.0.0" />
     <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.3" />
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.6" />
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.1.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="2.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.AzureAppConfiguration" Version="1.0.0-preview-008520001" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.1.1" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="2.1.1" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="4.5.1" />
