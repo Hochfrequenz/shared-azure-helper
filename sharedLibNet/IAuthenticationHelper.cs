@@ -7,7 +7,7 @@ namespace sharedLibNet
 {
     public interface IAuthenticationHelper
     {
-        IConfiguration AppConfiguration { get; set; }
+       // IConfiguration AppConfiguration { get; set; }
 
         Task<string> AuthenticateWithCert(string target, bool overriding = false, ILogger log = null);
         Task<string> AuthenticateWithToken(ILogger log);

@@ -21,6 +21,18 @@ using RestSharp;
 using StackExchange.Profiling;
 namespace sharedLibNet
 {
+    public class AuthConfiguration
+    {
+        public string Issuer { get; set; }
+        public string ApiKey { get; set; }
+        public string Audience { get; set; }
+        public string ClientId { get; set; }
+        public string ClientSecret { get; set; }
+        public string AccessToken { get; set; }
+        public string AuthURL { get; set; }
+        public string[] Issuers{ get; set; }
+        public string[] Audiences { get; set; }
+    }
     public class AuthResult
     {
         public ClaimsPrincipal Principal { get; private set; }
@@ -40,23 +52,43 @@ namespace sharedLibNet
         private IConfigurationManager<OpenIdConnectConfiguration> _configurationManager;
         public string _accessToken;
         public Dictionary<string, string> _certStrings = new Dictionary<string, string>();
-        public IConfiguration AppConfiguration { get; set; }
+        //public IConfiguration AppConfiguration { get; set; }
+        protected AuthConfiguration _config = null;
         public readonly string CertIssuer = "<PassName>";
         public List<string> allowedCertificates = null;
         protected HttpClient httpClient = new HttpClient();
         protected string _authURL;
         public RestClient authClient = null;
 
+        [Obsolete("Please use the version to specify with an explicit AuthConfiguration")]
         public AuthenticationHelper(string certIssuer, string authURL, IConfiguration config)
         {
             _authURL = authURL;
             CertIssuer = certIssuer;
-            AppConfiguration = config;
+
+            _config = new AuthConfiguration()
+            {
+                ApiKey = config[AppConfigurationKey.API_KEY],
+                Audience = config[AppConfigurationKey.AUDIENCE],
+                ClientId = config[AppConfigurationKey.CLIENT_ID],
+                ClientSecret = config[AppConfigurationKey.CLIENT_SECRET],
+                Issuer = config[AppConfigurationKey.ISSUER],
+                AccessToken = config[AppConfigurationKey.ACCESS_TOKEN],
+                AuthURL = config[AppConfigurationKey.AUTH_URL],
+                Issuers = config.GetSection("ISSUERS").Get<string[]>(),
+                Audiences = config.GetSection("AUDIENCES").Get<string[]>()
+            };
+        }
+        public AuthenticationHelper(string certIssuer, string authURL, AuthConfiguration config)
+        {
+            _authURL = authURL;
+            CertIssuer = certIssuer;
+            _config = config;
         }
 
         public async Task Configure(ILogger log = null)
         {
-            var issuer = AppConfiguration[AppConfigurationKey.ISSUER];
+            var issuer = _config.Issuer;
 
             var documentRetriever = new HttpDocumentRetriever
             {
@@ -68,13 +100,13 @@ namespace sharedLibNet
                 new OpenIdConnectConfigurationRetriever(),
                 documentRetriever
             );
-            if (AppConfiguration[AppConfigurationKey.ACCESS_TOKEN] != null)
+            if (_config.AccessToken != null)
             {
-                _accessToken = AppConfiguration[AppConfigurationKey.ACCESS_TOKEN];
+                _accessToken = _config.AccessToken;
             }
             else
             {
-                if (AppConfiguration[AppConfigurationKey.CLIENT_ID] != null)
+                if (_config.ClientId != null)
                 {
                     if (log != null)
                     {
@@ -88,10 +120,10 @@ namespace sharedLibNet
         protected async Task GetFingerprints(ILogger log)
         {
             dynamic config = new ExpandoObject();
-            if (AppConfiguration[AppConfigurationKey.API_KEY] != null)
+            if (_config.ApiKey != null)
             {
                 log.LogDebug($"Adding {CustomHeader.OcpApimSubscriptionKey} from app configuration");
-                httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, AppConfiguration[AppConfigurationKey.API_KEY]);
+                httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, _config.ApiKey);
             }
             Uri fingerPrintUrl = new Uri(_authURL + "/fingerprints");
             HttpResponseMessage responseMessage;
@@ -269,16 +301,16 @@ namespace sharedLibNet
             Uri authUrl = null;
             if (authClient == null)
             {
-                authUrl = new Uri($"{AppConfiguration[AppConfigurationKey.AUTH_URL]}/authenticate");
+                authUrl = new Uri($"{_config.AuthURL}/authenticate");
                 authClient = new RestClient(authUrl);
             }
 
             var request = new RestRequest(Method.POST);
             request.AddHeader("X-Cert-For", target);
             request.AddHeader("X-Cert-From", CertIssuer);
-            if (AppConfiguration[AppConfigurationKey.API_KEY] != null)
+            if (_config.ApiKey != null)
             {
-                request.AddHeader(CustomHeader.OcpApimSubscriptionKey, AppConfiguration[AppConfigurationKey.API_KEY]);
+                request.AddHeader(CustomHeader.OcpApimSubscriptionKey, _config.ApiKey);
             }
             request.AddHeader(CustomHeader.Authorization, "Bearer " + _accessToken);
             request.AddHeader(CustomHeader.HfAuthorization, "Bearer " + _accessToken);
@@ -307,37 +339,37 @@ namespace sharedLibNet
         {
             try
             {
-                foreach (string appConfKey in new HashSet<string>() {
-                    AppConfigurationKey.ISSUER,
-                    AppConfigurationKey.CLIENT_ID,
-                    AppConfigurationKey.CLIENT_SECRET,
-                    AppConfigurationKey.NEW_AUDIENCE
-                })
-                {
-                    if (string.IsNullOrEmpty(AppConfiguration[appConfKey]))
-                    {
-                        string errorMessage = $"Appconfiguration needs to include {appConfKey}";
-                        if (log != null)
-                        {
-                            log.LogCritical(errorMessage);
-                        }
-                        throw new InvalidOperationException(errorMessage);
-                    }
-                }
-                Uri oauthTokenUri = new Uri($"{AppConfiguration[AppConfigurationKey.ISSUER]}oauth/token");
+                //foreach (string appConfKey in new HashSet<string>() {
+                //    AppConfigurationKey.ISSUER,
+                //    AppConfigurationKey.CLIENT_ID,
+                //    AppConfigurationKey.CLIENT_SECRET,
+                //    AppConfigurationKey.NEW_AUDIENCE
+                //})
+                //{
+                //    if (string.IsNullOrEmpty(AppConfiguration[appConfKey]))
+                //    {
+                //        string errorMessage = $"Appconfiguration needs to include {appConfKey}";
+                //        if (log != null)
+                //        {
+                //            log.LogCritical(errorMessage);
+                //        }
+                //        throw new InvalidOperationException(errorMessage);
+                //    }
+                //}
+                Uri oauthTokenUri = new Uri($"{_config.Issuer}oauth/token");
                 var client = new RestClient(oauthTokenUri);
                 var request = new RestRequest(Method.POST);
                 request.AddHeader("content-type", "application/json");
                 JObject parameter = new JObject
                 {
-                    ["client_id"] = AppConfiguration[AppConfigurationKey.CLIENT_ID],
-                    ["client_secret"] = AppConfiguration[AppConfigurationKey.CLIENT_SECRET],
-                    ["audience"] = AppConfiguration[AppConfigurationKey.NEW_AUDIENCE],
+                    ["client_id"] = _config.ClientId,
+                    ["client_secret"] = _config.ClientSecret,
+                    ["audience"] = _config.Audience,
                     ["grant_type"] = "client_credentials"
                 };
                 if (log != null)
                 {
-                    log.LogInformation($"Trying to get oauth token from {oauthTokenUri} with client id {AppConfiguration["CLIENT_ID"]} and audience {AppConfiguration["NEW_AUDIENCE"]}");
+                    log.LogInformation($"Trying to get oauth token from {oauthTokenUri} with client id {_config.ClientId} and audience {_config.Audience}");
                     log.LogInformation(JsonConvert.SerializeObject(parameter));
                 }
                 try
@@ -412,10 +444,10 @@ namespace sharedLibNet
             }
             TokenValidationParameters validationParameter;
 
-            if (AppConfiguration["ISSUER"] != null)
+            if (_config.Issuer != null)
             {
-                var issuer = AppConfiguration[AppConfigurationKey.ISSUER];
-                var audience = AppConfiguration[AppConfigurationKey.AUDIENCE];
+                var issuer = _config.Issuer;
+                var audience = _config.Audience;
                 if (checkForAudience != null)
                 {
 
@@ -447,14 +479,14 @@ namespace sharedLibNet
                 }
             }
 
-            else if (AppConfiguration.GetSection("ISSUERS") != null)
+            else if (_config.Issuers != null)
             {
                 validationParameter = new TokenValidationParameters()
                 {
                     RequireSignedTokens = true,
-                    ValidAudiences = AppConfiguration.GetSection("AUDIENCES").Get<string[]>(),
+                    ValidAudiences = _config.Audiences,
                     ValidateAudience = true,
-                    ValidIssuers = AppConfiguration.GetSection("ISSUERS").Get<string[]>(),
+                    ValidIssuers = _config.Issuers,
                     ValidateIssuer = true,
                     ValidateIssuerSigningKey = false,
                     ValidateLifetime = true,
