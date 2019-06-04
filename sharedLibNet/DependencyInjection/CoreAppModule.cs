@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.AzureAppConfiguration;
@@ -34,7 +34,13 @@ namespace sharedLibNet.DependencyInjection
                 ApiKey = config[EnvironmentVariableNames.ENV_HF_API_KEY],
                 AuthURL = config[EnvironmentVariableNames.ENV_AUTH_URL],
                 Issuers = config.GetSection("ISSUERS")?.Get<string[]>(),
-                Audiences = config.GetSection("AUDIENCES")?.Get<string[]>()
+                Audiences = config.GetSection("AUDIENCES")?.Get<string[]>(),
+
+                Audience = config[AppConfigurationKey.AUDIENCE],
+                ClientId = config[AppConfigurationKey.CLIENT_ID],
+                ClientSecret = config[AppConfigurationKey.CLIENT_SECRET],
+                Issuer = config[AppConfigurationKey.ISSUER],
+                AccessToken = config[AppConfigurationKey.ACCESS_TOKEN],
             };
             var _authHelper = new AuthenticationHelper(_authServiceName, config[EnvironmentVariableNames.ENV_AUTH_URL], _config);
             var _raygun = new RaygunClient(config[EnvironmentVariableNames.ENV_RAYGUN_API_KEY]);
