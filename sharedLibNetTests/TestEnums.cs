@@ -1,3 +1,4 @@
+using EshDataExchangeFormats;
 using sharedLibNet;
 using Xunit;
 
@@ -8,7 +9,7 @@ namespace sharedLibNetTests
         [Fact]
         public void TestHeaderToString()
         {
-            Assert.Equal("X-ARR-ClientCert", CustomHeader.XArrClientCert.ToString());
+            Assert.Equal("X-ARR-ClientCert", HeaderNames.Auth.XArrClientCert.ToString());
         }
 
         [Fact]

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using EshDataExchangeFormats;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using sharedLibNet.Model;
@@ -22,14 +23,14 @@ namespace sharedLibNet
             dynamic config = new ExpandoObject();
             config.client = client;
             config.app = app;
-            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.XArrClientCert))
+            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.XArrClientCert))
             {
-                _logger.LogDebug($"Removing {CustomHeader.XArrClientCert}");
-                httpClient.DefaultRequestHeaders.Remove(CustomHeader.XArrClientCert);
+                _logger.LogDebug($"Removing {HeaderNames.Auth.XArrClientCert}");
+                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.XArrClientCert);
             }
 
-            _logger.LogDebug($"Adding {CustomHeader.XArrClientCert} with own clientCertString");
-            httpClient.DefaultRequestHeaders.Add(CustomHeader.XArrClientCert, clientCertString);
+            _logger.LogDebug($"Adding {HeaderNames.Auth.XArrClientCert} with own clientCertString");
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.XArrClientCert, clientCertString);
 
             var responseMessage = await httpClient.PostAsync(configURL, new StringContent(JsonConvert.SerializeObject(config)));
             if (!responseMessage.IsSuccessStatusCode)

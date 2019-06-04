@@ -9,6 +9,7 @@ using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using EshDataExchangeFormats;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -126,8 +127,8 @@ namespace sharedLibNet
             dynamic config = new ExpandoObject();
             if (_config.ApiKey != null)
             {
-                log.LogDebug($"Adding {CustomHeader.OcpApimSubscriptionKey} from app configuration");
-                httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, _config.ApiKey);
+                log.LogDebug($"Adding {HeaderNames.Azure.SUBSCRIPTION_KEY} from app configuration");
+                httpClient.DefaultRequestHeaders.Add(HeaderNames.Azure.SUBSCRIPTION_KEY, _config.ApiKey);
             }
             Uri fingerPrintUrl = new Uri(_authURL + "/fingerprints");
             HttpResponseMessage responseMessage;
@@ -156,7 +157,7 @@ namespace sharedLibNet
                 {
                     using (MiniProfiler.Current.Step("Reading header - alternative Version"))
                     {
-                        if (req.Headers.TryGetValue(CustomHeader.HfAuthorization, out var hfauthHeaders))
+                        if (req.Headers.TryGetValue(HeaderNames.Auth.HfAuthorization, out var hfauthHeaders))
                         {
                             foreach (var header in hfauthHeaders)
                             {
@@ -165,7 +166,7 @@ namespace sharedLibNet
                         }
                         if (authHeader != null)
                         {
-                            if (req.Headers.TryGetValue(CustomHeader.Authorization, out var authHeaders))
+                            if (req.Headers.TryGetValue(HeaderNames.Auth.Authorization, out var authHeaders))
                             {
                                 foreach (var header in authHeaders)
                                 {
@@ -185,18 +186,18 @@ namespace sharedLibNet
                 }
                 if (authHeader.Count == 0 || authHeader.Where(head => head.Scheme == "Bearer").Count() == 0)
                 {
-                    if (req.Headers.ContainsKey(CustomHeader.XArrClientCert) || req.Headers.ContainsKey(CustomHeader.HfClientCert))
+                    if (req.Headers.ContainsKey(HeaderNames.Auth.XArrClientCert) || req.Headers.ContainsKey(HeaderNames.Auth.HfClientCert))
                     {
                         string certString = null;
                         try
                         {
-                            if (req.Headers.ContainsKey(CustomHeader.XArrClientCert))
+                            if (req.Headers.ContainsKey(HeaderNames.Auth.XArrClientCert))
                             {
-                                certString = req.Headers[CustomHeader.XArrClientCert];
+                                certString = req.Headers[HeaderNames.Auth.XArrClientCert];
                             }
-                            else if (req.Headers.ContainsKey(CustomHeader.HfClientCert))
+                            else if (req.Headers.ContainsKey(HeaderNames.Auth.HfClientCert))
                             {
-                                certString = req.Headers[CustomHeader.HfClientCert];
+                                certString = req.Headers[HeaderNames.Auth.HfClientCert];
                             }
                             byte[] clientCertBytes = null;
                             using (MiniProfiler.Current.Step("Decoding string"))
@@ -314,10 +315,10 @@ namespace sharedLibNet
             request.AddHeader("X-Cert-From", CertIssuer);
             if (_config.ApiKey != null)
             {
-                request.AddHeader(CustomHeader.OcpApimSubscriptionKey, _config.ApiKey);
+                request.AddHeader(HeaderNames.Azure.SUBSCRIPTION_KEY, _config.ApiKey);
             }
-            request.AddHeader(CustomHeader.Authorization, "Bearer " + _accessToken);
-            request.AddHeader(CustomHeader.HfAuthorization, "Bearer " + _accessToken);
+            request.AddHeader(HeaderNames.Auth.Authorization, "Bearer " + _accessToken);
+            request.AddHeader(HeaderNames.Auth.HfAuthorization, "Bearer " + _accessToken);
             IRestResponse response = await authClient.ExecuteTaskAsync(request);
             if (response.IsSuccessful == false)
             {

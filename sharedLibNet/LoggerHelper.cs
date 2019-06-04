@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using BO4E.BO;
 using BO4E.Extensions.Encryption;
+using EshDataExchangeFormats;
 using Microsoft.Azure.EventGrid;
 using Microsoft.Azure.EventGrid.Models;
 using Microsoft.Extensions.Logging;
@@ -102,11 +103,11 @@ namespace sharedLibNet
         public static async Task<HttpResponseMessage> SendLogToServer(Uri url, InMemoryLoggerProvider logger, string certificate)
         {
             var cert = certificate;
-            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.XArrClientCert))
+            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.XArrClientCert))
             {
-                httpClient.DefaultRequestHeaders.Remove(CustomHeader.XArrClientCert);
+                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.XArrClientCert);
             }
-            httpClient.DefaultRequestHeaders.Add(CustomHeader.XArrClientCert, cert);
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.XArrClientCert, cert);
             return await httpClient.PostAsync(url, new StringContent(JsonConvert.SerializeObject(logger.Messages)));
         }
 
@@ -119,23 +120,23 @@ namespace sharedLibNet
         /// <returns>HttpClient response of POST</returns>
         public static async Task<HttpResponseMessage> SendLogToServerWithToken(Uri url, InMemoryLoggerProvider logger, string token, string apiKey)
         {
-            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.Authorization))
+            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.Authorization))
             {
-                httpClient.DefaultRequestHeaders.Remove(CustomHeader.Authorization);
+                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.Authorization);
             }
-            httpClient.DefaultRequestHeaders.Add(CustomHeader.Authorization, token);
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.Authorization, token);
 
-            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.HfAuthorization))
+            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.HfAuthorization))
             {
-                httpClient.DefaultRequestHeaders.Remove(CustomHeader.HfAuthorization);
+                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.HfAuthorization);
             }
-            httpClient.DefaultRequestHeaders.Add(CustomHeader.HfAuthorization, token);
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.HfAuthorization, token);
 
-            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.OcpApimSubscriptionKey) && apiKey != null)
+            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Azure.SUBSCRIPTION_KEY) && apiKey != null)
             {
-                httpClient.DefaultRequestHeaders.Remove(CustomHeader.OcpApimSubscriptionKey);
+                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Azure.SUBSCRIPTION_KEY);
             }
-            httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, apiKey);
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Azure.SUBSCRIPTION_KEY, apiKey);
 
 
             return await httpClient.PostAsync(url, new StringContent(JsonConvert.SerializeObject(logger.Messages)));
@@ -227,33 +228,33 @@ namespace sharedLibNet
         public static async Task<HttpResponseMessage> GetEventLogs(Uri url, string certificate)
         {
             var cert = certificate;
-            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.XArrClientCert))
+            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.XArrClientCert))
             {
-                httpClient.DefaultRequestHeaders.Remove(CustomHeader.XArrClientCert);
+                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.XArrClientCert);
             }
-            httpClient.DefaultRequestHeaders.Add(CustomHeader.XArrClientCert, cert);
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.XArrClientCert, cert);
             return await httpClient.GetAsync(url);
         }
 
         public static async Task<HttpResponseMessage> GetEventLogsWithToken(Uri url, string token, string apiKey)
         {
-            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.Authorization))
+            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.Authorization))
             {
-                httpClient.DefaultRequestHeaders.Remove(CustomHeader.Authorization);
+                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.Authorization);
             }
-            httpClient.DefaultRequestHeaders.Add(CustomHeader.Authorization, token);
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.Authorization, token);
 
-            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.HfAuthorization))
+            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.HfAuthorization))
             {
-                httpClient.DefaultRequestHeaders.Remove(CustomHeader.HfAuthorization);
+                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.HfAuthorization);
             }
-            httpClient.DefaultRequestHeaders.Add(CustomHeader.HfAuthorization, token);
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.HfAuthorization, token);
 
-            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.OcpApimSubscriptionKey) && apiKey != null)
+            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Azure.SUBSCRIPTION_KEY) && apiKey != null)
             {
-                httpClient.DefaultRequestHeaders.Remove(CustomHeader.OcpApimSubscriptionKey);
+                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Azure.SUBSCRIPTION_KEY);
             }
-            httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, apiKey);
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Azure.SUBSCRIPTION_KEY, apiKey);
 
             return await httpClient.GetAsync(url);
         }

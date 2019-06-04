@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using BO4E.meta;
+using EshDataExchangeFormats;
 using EshDataExchangeFormats.lookup;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace sharedLibNet
 {
@@ -13,6 +15,7 @@ namespace sharedLibNet
     {
         protected HttpClient httpClient = new HttpClient();
         protected ILogger _logger = null;
+        protected const string SYMMETRIC_ENCRYPTION_KEY_HEADER_NAME = "encryptionkey";
         private const string MIME_TYPE_JSON = "application/json"; // replace with MediaTypeNames.Application.Json as soon as .net core 2.1 is used
         public LookupHelper(ILogger logger)
         {
@@ -21,31 +24,31 @@ namespace sharedLibNet
 
         public async Task<GenericLookupResult> RetrieveURLs(IList<Bo4eUri> urls, Uri lookupURL, string clientCertString, string apiKey, BOBackendId backendId)
         {
-            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.XArrClientCert))
+            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.XArrClientCert))
             {
-                _logger.LogDebug($"Removing {CustomHeader.XArrClientCert} header");
-                httpClient.DefaultRequestHeaders.Remove(CustomHeader.XArrClientCert);
+                _logger.LogDebug($"Removing {HeaderNames.Auth.XArrClientCert} header");
+                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.XArrClientCert);
             }
 
-            httpClient.DefaultRequestHeaders.Add(CustomHeader.XArrClientCert, clientCertString);
-            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.OcpApimSubscriptionKey))
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.XArrClientCert, clientCertString);
+            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Azure.SUBSCRIPTION_KEY))
             {
-                _logger.LogDebug($"Removing {CustomHeader.OcpApimSubscriptionKey} header");
-                httpClient.DefaultRequestHeaders.Remove(CustomHeader.OcpApimSubscriptionKey);
+                _logger.LogDebug($"Removing {HeaderNames.Azure.SUBSCRIPTION_KEY} header");
+                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Azure.SUBSCRIPTION_KEY);
             }
             if (!string.IsNullOrEmpty(apiKey))
             {
-                _logger.LogDebug($"Adding {CustomHeader.OcpApimSubscriptionKey} header");
-                httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, apiKey);
+                _logger.LogDebug($"Adding {HeaderNames.Azure.SUBSCRIPTION_KEY} header");
+                httpClient.DefaultRequestHeaders.Add(HeaderNames.Azure.SUBSCRIPTION_KEY, apiKey);
             }
-            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.BackendId))
+            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.BACKEND_ID))
             {
-                _logger.LogDebug($"Removing {CustomHeader.BackendId} header");
-                httpClient.DefaultRequestHeaders.Remove(CustomHeader.BackendId);
+                _logger.LogDebug($"Removing {HeaderNames.BACKEND_ID} header");
+                httpClient.DefaultRequestHeaders.Remove(HeaderNames.BACKEND_ID);
             }
             //if (!string.IsNullOrEmpty(backendId))
             //{
-            httpClient.DefaultRequestHeaders.Add(CustomHeader.BackendId, backendId.ToString());
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.BACKEND_ID, backendId.ToString());
             //}
             GenericLookupQuery urlObject = new GenericLookupQuery()
             {
@@ -113,7 +116,7 @@ namespace sharedLibNet
         /// <param name="apiKey">API key for gateway</param>
         /// <param name="backendId">ID of Backend</param>
         /// <returns></returns>
-        public async Task<string> LookupJsonWithUserToken(string json, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
+        public async Task<string> LookupJsonWithUserToken(string json, Uri lookupURL, string token, string apiKey, string encryptionKey, BOBackendId backendId)
         {
             _logger.LogDebug("LookupJsonWithUserToken");
             RemoveAndReAddHeaders(token, apiKey, backendId);
@@ -128,40 +131,65 @@ namespace sharedLibNet
             return await responseMessage.Content.ReadAsStringAsync();
         }
 
+        /// <summary>
+        /// Initialise the suggestion cache for Backend <paramref name="bobId"/> with the lookup result of <paramref name="initialisationQuery"/>
+        /// </summary>
+        /// <param name="initialisationQuery">query whose result is used to initialise the suggestion cache</param>
+        /// <param name="lookupUrl">URI of the lookup service</param>
+        /// <param name="token">auth token</param>
+        /// <param name="apiKey">api key for azure</param>
+        /// <param name="bobId">unique ID of the backend</param>
+        /// <returns>raw lookup response as string in case of success, null in case of failure</returns>
+        public async Task<string> InitialiseSuggestionCache(GenericLookupQuery initialisationQuery, Uri lookupUrl, string token, string apiKey, BOBackendId bobId)
+        {
+            _logger.LogDebug("InitialiseSuggestionCache (lookup helper)");
+            RemoveAndReAddHeaders(token, apiKey, bobId);
+            string serialisedQuery = JsonConvert.SerializeObject(initialisationQuery, new StringEnumConverter());
+            var responseMessage = await httpClient.PutAsync(lookupUrl, new StringContent(serialisedQuery, System.Text.Encoding.UTF8, MIME_TYPE_JSON));
+            if (!responseMessage.IsSuccessStatusCode)
+            {
+                string responseContent = await responseMessage.Content.ReadAsStringAsync();
+                _logger.LogCritical($"Could not perform cache initialisation: {responseMessage.ReasonPhrase}");
+                return null;
+            }
+            _logger.LogDebug($"Successfully initialised cache with status code {responseMessage.StatusCode}");
+            return await responseMessage.Content.ReadAsStringAsync();
+        }
+
         private HttpClient RemoveAndReAddHeaders(string token, string apiKey, BOBackendId backendId)
         {
             _logger.LogDebug("RemoveAndReAddHeaders");
-            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.Authorization))
+            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.Authorization))
             {
-                _logger.LogDebug($"Removing {CustomHeader.Authorization} header");
-                httpClient.DefaultRequestHeaders.Remove(CustomHeader.Authorization);
+                _logger.LogDebug($"Removing {HeaderNames.Auth.Authorization} header");
+                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.Authorization);
             }
-            httpClient.DefaultRequestHeaders.Add(CustomHeader.Authorization, "Bearer " + token);
-            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.HfAuthorization))
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.Authorization, "Bearer " + token);
+            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.HfAuthorization))
             {
-                _logger.LogDebug($"Removing {CustomHeader.HfAuthorization} header");
-                httpClient.DefaultRequestHeaders.Remove(CustomHeader.HfAuthorization);
+                _logger.LogDebug($"Removing {HeaderNames.Auth.HfAuthorization} header");
+                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.HfAuthorization);
             }
-            httpClient.DefaultRequestHeaders.Add(CustomHeader.HfAuthorization, "Bearer " + token);
-            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.OcpApimSubscriptionKey))
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.HfAuthorization, "Bearer " + token);
+            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Azure.SUBSCRIPTION_KEY))
             {
-                _logger.LogDebug($"Removing {CustomHeader.OcpApimSubscriptionKey} header");
-                httpClient.DefaultRequestHeaders.Remove(CustomHeader.OcpApimSubscriptionKey);
+                _logger.LogDebug($"Removing {HeaderNames.Azure.SUBSCRIPTION_KEY} header");
+                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Azure.SUBSCRIPTION_KEY);
             }
             if (!string.IsNullOrEmpty(apiKey))
             {
-                _logger.LogDebug($"Adding {CustomHeader.OcpApimSubscriptionKey} header");
-                httpClient.DefaultRequestHeaders.Add(CustomHeader.OcpApimSubscriptionKey, apiKey);
+                _logger.LogDebug($"Adding {HeaderNames.Azure.SUBSCRIPTION_KEY} header");
+                httpClient.DefaultRequestHeaders.Add(HeaderNames.Azure.SUBSCRIPTION_KEY, apiKey);
             }
-            if (httpClient.DefaultRequestHeaders.Contains(CustomHeader.BackendId))
+            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.BACKEND_ID))
             {
-                _logger.LogDebug($"Removing {CustomHeader.BackendId} header");
-                httpClient.DefaultRequestHeaders.Remove(CustomHeader.BackendId);
+                _logger.LogDebug($"Removing {HeaderNames.BACKEND_ID} header");
+                httpClient.DefaultRequestHeaders.Remove(HeaderNames.BACKEND_ID);
             }
             //if (!string.IsNullOrEmpty(backendId))
             //{
-            _logger.LogDebug($"Adding {CustomHeader.BackendId} header");
-            httpClient.DefaultRequestHeaders.Add(CustomHeader.BackendId, backendId.ToString());
+            _logger.LogDebug($"Adding {HeaderNames.BACKEND_ID} header");
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.BACKEND_ID, backendId.ToString());
             //}
             _logger.LogDebug("Removed and readded headers.");
             return httpClient;
