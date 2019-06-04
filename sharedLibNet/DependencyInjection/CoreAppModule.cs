@@ -1,6 +1,5 @@
-﻿using System;
+using System;
 using System.Net.Http;
-using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,9 +24,9 @@ namespace sharedLibNet.DependencyInjection
                     .AddEnvironmentVariables()
                     .AddAzureAppConfiguration(options =>
                     {
-                        options.Connect(Environment.GetEnvironmentVariable("AzureAppConfigConnectionString"))
+                        options.Connect(Environment.GetEnvironmentVariable(EnvironmentVariableNames.ENV_CONFIG_CONNECTION))
                                .Use(KeyFilter.Any, LabelFilter.Null)
-                               .Use(KeyFilter.Any, Environment.GetEnvironmentVariable("Environment"));
+                               .Use(KeyFilter.Any, Environment.GetEnvironmentVariable(EnvironmentVariableNames.SYSTEM_ENVIRONMENT));
                     })
                     .Build();
             var _config = new AuthConfiguration()

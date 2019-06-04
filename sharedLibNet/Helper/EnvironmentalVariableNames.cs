@@ -42,5 +42,16 @@
         /// <seealso cref="ENV_KEYVAULT_CLIENT"/>
         /// <seealso cref="ENV_KEYVAULT_URL"/>
         public const string ENV_KEYVAULT_SECRET = "KeyVault:ClientSecret";
+
+
+        /// <summary>
+        /// connection string for loading configuration from azure portal
+        /// </summary>
+        public const string ENV_CONFIG_CONNECTION = "AzureAppConfigConnectionString";
+
+        /// <summary>
+        /// system context/environment; e.g. 'Stage' or 'Production'
+        /// </summary>
+        public const string SYSTEM_ENVIRONMENT = "Environment";
     }
 }

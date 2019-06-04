@@ -30,7 +30,7 @@ namespace sharedLibNet
         public string ClientSecret { get; set; }
         public string AccessToken { get; set; }
         public string AuthURL { get; set; }
-        public string[] Issuers{ get; set; }
+        public string[] Issuers { get; set; }
         public string[] Audiences { get; set; }
     }
     public class AuthResult
@@ -89,6 +89,10 @@ namespace sharedLibNet
         public async Task Configure(ILogger log = null)
         {
             var issuer = _config.Issuer;
+            if (log != null && string.IsNullOrWhiteSpace(issuer))
+            {
+                log.LogCritical($"_config.Issuer loaded from config[\"{AppConfigurationKey.ISSUER}\"] is empty!");
+            }
 
             var documentRetriever = new HttpDocumentRetriever
             {
