@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.Azure.KeyVault;
+using Microsoft.Azure.KeyVault.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using sharedLibNet.DependencyInjection.Interfaces;
@@ -15,6 +16,7 @@ namespace sharedLibNet.DependencyInjection
         {
 
         }
+
         public async Task<TOutput> InvokeAsync<TInput, TOutput>(TInput input, FunctionOptionBase options)
         {
             var keyOptions = options as KeyVaultFunctionOptions;
@@ -22,10 +24,27 @@ namespace sharedLibNet.DependencyInjection
             keyvault_secret = keyOptions.ClientSecret;
             keyvault_url = keyOptions.Url;
             KVClient = new KeyVaultClient(GetToken, keyOptions.Client);
-            string certName = input as string;
-            var cert = await KVClient.GetCertificateAsync(keyvault_url, certName);
-            return (TOutput)(object)cert;
+            string elementName = input as string;
+            TOutput result;
+            if (typeof(TOutput) == typeof(SecretBundle))
+            {
+                if (Log != null)
+                {
+                    Log.LogDebug("Using GetSecretAsync");
+                }
+                result = (TOutput)(object)(await KVClient.GetSecretAsync(keyvault_url, elementName));
+            }
+            else
+            {   //if(typeof(TOutput)==typeof(CertificateBundle))
+                if (Log != null)
+                {
+                    Log.LogDebug("Using GetCertificateAsync");
+                }
+                result = (TOutput)(object)await KVClient.GetCertificateAsync(keyvault_url, elementName);
+            }
+            return result;
         }
+
         private static string keyvault_client;
         private static string keyvault_secret;
         private static string keyvault_url;
