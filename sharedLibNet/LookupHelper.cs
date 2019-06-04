@@ -116,7 +116,7 @@ namespace sharedLibNet
         /// <param name="apiKey">API key for gateway</param>
         /// <param name="backendId">ID of Backend</param>
         /// <returns></returns>
-        public async Task<string> LookupJsonWithUserToken(string json, Uri lookupURL, string token, string apiKey, string encryptionKey, BOBackendId backendId)
+        public async Task<string> LookupJsonWithUserToken(string json, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
         {
             _logger.LogDebug("LookupJsonWithUserToken");
             RemoveAndReAddHeaders(token, apiKey, backendId);
@@ -140,7 +140,7 @@ namespace sharedLibNet
         /// <param name="apiKey">api key for azure</param>
         /// <param name="bobId">unique ID of the backend</param>
         /// <returns>raw lookup response as string in case of success, null in case of failure</returns>
-        public async Task<string> InitialiseSuggestionCache(GenericLookupQuery initialisationQuery, Uri lookupUrl, string token, string apiKey, BOBackendId bobId)
+        public async Task<string> InitialiseSuggestionCache(GenericLookupQuery initialisationQuery, Uri lookupUrl, string token, string apiKey, string encryptionKey, BOBackendId bobId)
         {
             _logger.LogDebug("InitialiseSuggestionCache (lookup helper)");
             RemoveAndReAddHeaders(token, apiKey, bobId);
