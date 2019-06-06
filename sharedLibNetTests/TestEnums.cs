@@ -15,8 +15,8 @@ namespace sharedLibNetTests
         [Fact]
         public void TestApiToString()
         {
-            Assert.Equal("API_KEY", AppConfigurationKey.API_KEY.ToString());
-            Assert.Equal("ISSUER", AppConfigurationKey.ISSUER.ToString());
+            Assert.Equal("ApiGateway:Key", AppConfigurationKey.API_KEY.ToString());
+            Assert.Equal("Auth0:Issuer", AppConfigurationKey.ISSUER.ToString());
         }
     }
 }
