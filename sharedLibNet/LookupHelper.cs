@@ -105,6 +105,29 @@ namespace sharedLibNet
                 throw new System.Exception($"Could not de-serialise result from {JsonConvert.SerializeObject(resultObject)} ", e);
             }
         }
+        public async Task<GenericLookupResult> Suggest(string suggestion,string boe4Type, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
+        {
+            RemoveAndReAddHeaders(token, apiKey, backendId);
+            var responseMessage = await httpClient.GetAsync(lookupURL, );
+            if (!responseMessage.IsSuccessStatusCode)
+            {
+                string responseContent = await responseMessage.Content.ReadAsStringAsync();
+                _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase} / {responseContent}; The original request was: {requestBody} POSTed to {lookupURL}");
+                return null;
+            }
+            GenericLookupResult resultObject = null;
+            try
+            {
+                resultObject = (JsonConvert.DeserializeObject<GenericLookupResult>(await responseMessage.Content.ReadAsStringAsync()));
+                _logger.LogDebug($"Successfully de-serialised as GenericLookupResult");
+                return resultObject;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"Could not de-serialise result from {JsonConvert.SerializeObject(resultObject)}: {e.ToString()}");
+                throw new System.Exception($"Could not de-serialise result from {JsonConvert.SerializeObject(resultObject)} ", e);
+            }
+        }
 
         /// <summary>
         /// most generic call of the lookup service.
