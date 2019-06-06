@@ -108,11 +108,11 @@ namespace sharedLibNet
         public async Task<GenericLookupResult> Suggest(string suggestion,string boe4Type, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
         {
             RemoveAndReAddHeaders(token, apiKey, backendId);
-            var responseMessage = await httpClient.GetAsync(lookupURL, );
+            var responseMessage = await httpClient.GetAsync(lookupURL);
             if (!responseMessage.IsSuccessStatusCode)
             {
                 string responseContent = await responseMessage.Content.ReadAsStringAsync();
-                _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase} / {responseContent}; The original request was: {requestBody} POSTed to {lookupURL}");
+                _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase} / {responseContent}; The original request was: {suggestion} POSTed to {lookupURL}");
                 return null;
             }
             GenericLookupResult resultObject = null;
