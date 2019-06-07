@@ -124,13 +124,13 @@ namespace sharedLibNet
             {
                 httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.Authorization);
             }
-            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.Authorization, token);
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.Authorization, "Bearer " + token);
 
             if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.HfAuthorization))
             {
                 httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.HfAuthorization);
             }
-            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.HfAuthorization, token);
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.HfAuthorization,"Bearer "+ token);
 
             if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Azure.SUBSCRIPTION_KEY) && apiKey != null)
             {
@@ -242,13 +242,13 @@ namespace sharedLibNet
             {
                 httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.Authorization);
             }
-            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.Authorization, token);
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.Authorization, "Bearer " + token);
 
             if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.HfAuthorization))
             {
                 httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.HfAuthorization);
             }
-            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.HfAuthorization, token);
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.HfAuthorization,"Bearer "+ token);
 
             if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Azure.SUBSCRIPTION_KEY) && apiKey != null)
             {

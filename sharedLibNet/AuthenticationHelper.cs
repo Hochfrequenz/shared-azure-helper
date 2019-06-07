@@ -185,6 +185,7 @@ namespace sharedLibNet
                 {
                     log.LogError($"Exception in Authentication Helper Http_CheckAuth: {e}");
                 }
+                log.LogDebug($"Found authHeaders count:{authHeader.Count}");
                 if (authHeader.Count == 0 || authHeader.Where(head => head.Scheme == "Bearer").Count() == 0)
                 {
                     if (req.Headers.ContainsKey(HeaderNames.Auth.XArrClientCert) || req.Headers.ContainsKey(HeaderNames.Auth.HfClientCert))
