@@ -90,19 +90,22 @@ namespace sharedLibNet
             {
                 string responseContent = await responseMessage.Content.ReadAsStringAsync();
                 _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase} / {responseContent}; The original request was: {requestBody} POSTed to {lookupURL}");
+                _logger.LogDebug($"Returning null from lookup helper because of negative response code '{responseMessage.StatusCode}'");
                 return null;
             }
-            GenericLookupResult resultObject = null;
+            GenericLookupResult resultObject;
+            string responseString = await responseMessage.Content.ReadAsStringAsync();
             try
             {
-                resultObject = (JsonConvert.DeserializeObject<GenericLookupResult>(await responseMessage.Content.ReadAsStringAsync()));
+                resultObject = JsonConvert.DeserializeObject<GenericLookupResult>(responseString);
                 _logger.LogDebug($"Successfully de-serialised as GenericLookupResult");
                 return resultObject;
             }
             catch (Exception e)
             {
-                _logger.LogError($"Could not de-serialise result from {JsonConvert.SerializeObject(resultObject)}: {e.ToString()}");
-                throw new System.Exception($"Could not de-serialise result from {JsonConvert.SerializeObject(resultObject)} ", e);
+                string errorMessage = $"Could not de-serialise result from string '{responseString}' because: {e}";
+                _logger.LogError(errorMessage);
+                throw new InvalidCastException(errorMessage, e);
             }
         }
         public async Task<GenericLookupResult> Suggest(string suggestion,string boe4Type, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
