@@ -15,7 +15,7 @@ namespace sharedLibNet
     {
         protected HttpClient httpClient = new HttpClient();
         protected ILogger _logger = null;
-        protected const string SYMMETRIC_ENCRYPTION_KEY_HEADER_NAME = "encryptionkey";
+        protected const string SYMMETRIC_ENCRYPTION_KEY_HEADER_NAME = "encryptionkey"; // test if this can be replaced
         private const string MIME_TYPE_JSON = "application/json"; // replace with MediaTypeNames.Application.Json as soon as .net core 2.1 is used
         public LookupHelper(ILogger logger)
         {
@@ -24,22 +24,34 @@ namespace sharedLibNet
 
         public async Task<GenericLookupResult> RetrieveURLs(IList<Bo4eUri> urls, Uri lookupURL, string clientCertString, string apiKey, BOBackendId backendId)
         {
+            if (string.IsNullOrWhiteSpace(clientCertString))
+            {
+                _logger.LogWarning($"clientCertString is initial: '{clientCertString}'");
+            }
+            if (lookupURL == null)
+            {
+                _logger.LogCritical("lookupUrl is null!");
+            }
             if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.XArrClientCert))
             {
-                _logger.LogDebug($"Removing {HeaderNames.Auth.XArrClientCert} header");
+                _logger.LogDebug($"Removing header '{HeaderNames.Auth.XArrClientCert}'");
                 httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.XArrClientCert);
             }
 
             httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.XArrClientCert, clientCertString);
             if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Azure.SUBSCRIPTION_KEY))
             {
-                _logger.LogDebug($"Removing {HeaderNames.Azure.SUBSCRIPTION_KEY} header");
+                _logger.LogDebug($"Removing header '{HeaderNames.Azure.SUBSCRIPTION_KEY}'");
                 httpClient.DefaultRequestHeaders.Remove(HeaderNames.Azure.SUBSCRIPTION_KEY);
             }
             if (!string.IsNullOrEmpty(apiKey))
             {
                 _logger.LogDebug($"Adding {HeaderNames.Azure.SUBSCRIPTION_KEY} header");
                 httpClient.DefaultRequestHeaders.Add(HeaderNames.Azure.SUBSCRIPTION_KEY, apiKey);
+            }
+            else
+            {
+                _logger.LogWarning($"apiKey is initial: '{apiKey}'");
             }
             if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.BACKEND_ID))
             {
@@ -54,26 +66,18 @@ namespace sharedLibNet
             {
                 uris = urls
             };
-            string requestBody = JsonConvert.SerializeObject(urlObject);
+            string requestBody = JsonConvert.SerializeObject(urlObject, new StringEnumConverter());
             var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(requestBody, System.Text.UTF8Encoding.UTF8, MIME_TYPE_JSON));
             if (!responseMessage.IsSuccessStatusCode)
             {
-                string responseContent = await responseMessage.Content.ReadAsStringAsync();
-                _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase} / {responseContent}; The original request was: {requestBody} POSTed to {lookupURL}");
+                string responseContentPost = await responseMessage.Content.ReadAsStringAsync();
+                _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase} / {responseContentPost}; The original request was: {requestBody} POSTed to {lookupURL}");
                 return null;
             }
-            GenericLookupResult resultObject = null;
-            try
-            {
-                resultObject = (JsonConvert.DeserializeObject<GenericLookupResult>(await responseMessage.Content.ReadAsStringAsync()));
-                _logger.LogDebug($"Successfully de-serialised as GenericLookupResult");
-                return resultObject;
-            }
-            catch (Exception e)
-            {
-                _logger.LogError($"Could not de-serialise result from {JsonConvert.SerializeObject(resultObject)}: {e.ToString()}");
-                throw new Exception($"Could not de-serialize result from {JsonConvert.SerializeObject(resultObject)} ", e);
-            }
+
+            string responseContent = await responseMessage.Content.ReadAsStringAsync();
+            GenericLookupResult resultObject = DeserializeObjectAndLog<GenericLookupResult>(responseContent);
+            return resultObject;
         }
 
 
@@ -86,49 +90,64 @@ namespace sharedLibNet
             };
             string requestBody = JsonConvert.SerializeObject(urlObject);
             var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(requestBody, System.Text.UTF8Encoding.UTF8, MIME_TYPE_JSON));
+            string responseContent = await responseMessage.Content.ReadAsStringAsync();
             if (!responseMessage.IsSuccessStatusCode)
             {
-                string responseContent = await responseMessage.Content.ReadAsStringAsync();
                 _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase} / {responseContent}; The original request was: {requestBody} POSTed to {lookupURL}");
                 _logger.LogDebug($"Returning null from lookup helper because of negative response code '{responseMessage.StatusCode}'");
                 return null;
             }
-            GenericLookupResult resultObject;
-            string responseString = await responseMessage.Content.ReadAsStringAsync();
-            try
-            {
-                resultObject = JsonConvert.DeserializeObject<GenericLookupResult>(responseString);
-                _logger.LogDebug($"Successfully de-serialised as GenericLookupResult");
-                return resultObject;
-            }
-            catch (Exception e)
-            {
-                string errorMessage = $"Could not de-serialise result from string '{responseString}' because: {e}";
-                _logger.LogError(errorMessage);
-                throw new InvalidCastException(errorMessage, e);
-            }
+            GenericLookupResult resultObject = DeserializeObjectAndLog<GenericLookupResult>(responseContent);
+            return resultObject;
         }
-        public async Task<GenericLookupResult> Suggest(string suggestion,string boe4Type, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
+        public async Task<GenericLookupResult> Suggest(string suggestion, string boe4Type, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
         {
             RemoveAndReAddHeaders(token, apiKey, backendId);
             var responseMessage = await httpClient.GetAsync(lookupURL);
+            string responseContent = await responseMessage.Content.ReadAsStringAsync();
             if (!responseMessage.IsSuccessStatusCode)
             {
-                string responseContent = await responseMessage.Content.ReadAsStringAsync();
                 _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase} / {responseContent}; The original request was: {suggestion} POSTed to {lookupURL}");
                 return null;
             }
-            GenericLookupResult resultObject = null;
+            GenericLookupResult resultObject = DeserializeObjectAndLog<GenericLookupResult>(responseContent);
+            return resultObject;
+        }
+
+        /// <summary>
+        /// simple wrapper around <see cref="JsonConvert.DeserializeObject(string, Type)"/>.
+        /// But the result is also logged in the instance logger.
+        /// </summary>
+        /// <typeparam name="T">Type of expected result</typeparam>
+        /// <param name="json">json serialied object of type <typeparamref name="T"/></param>
+        /// <param name="throwException">set true to 'forward' exception. If set to false, null is returned but no exception thrown.</param>
+        /// <returns>deserialized result or null (null only if <paramref name="throwException"/> is false)</returns>
+        protected T DeserializeObjectAndLog<T>(string json, bool throwException = true)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                _logger.LogWarning($"String supposed to be valid json but is null or white space: '{json}'");
+            }
             try
             {
-                resultObject = (JsonConvert.DeserializeObject<GenericLookupResult>(await responseMessage.Content.ReadAsStringAsync()));
-                _logger.LogDebug($"Successfully de-serialised as GenericLookupResult");
-                return resultObject;
+                T result = JsonConvert.DeserializeObject<T>(json);
+                _logger.LogDebug($"Successfully deserialised as {typeof(T)}");
+                return result;
             }
             catch (Exception e)
             {
-                _logger.LogError($"Could not de-serialise result from {JsonConvert.SerializeObject(resultObject)}: {e.ToString()}");
-                throw new System.Exception($"Could not de-serialise result from {JsonConvert.SerializeObject(resultObject)} ", e);
+                _logger.LogWarning($"Could not deserialize '{json}' as {typeof(T)}: {e}");
+                if (throwException)
+                {
+                    _logger.LogDebug("Forwarding Exception...");
+                    throw e;
+                }
+                else
+                {
+                    _logger.LogDebug("Retuning null");
+                    object result = null;
+                    return (T)result;
+                }
             }
         }
 
