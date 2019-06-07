@@ -105,21 +105,22 @@ namespace sharedLibNet
                 new OpenIdConnectConfigurationRetriever(),
                 documentRetriever
             );
-            if (_config.AccessToken != null)
-            {
-                _accessToken = _config.AccessToken;
-            }
-            else
-            {
-                if (_config.ClientId != null)
-                {
-                    if (log != null)
-                    {
-                        log.LogDebug("Still haven't found an access token, so trying to get one via client_credentials");
-                    }
-                    _accessToken = await AuthenticateWithToken(log);
-                }
-            }
+            //JM20190607: This code path shouldn't be used anymore. Always use Bearer tokens
+            //if (_config.AccessToken != null)
+            //{
+            //    _accessToken = _config.AccessToken;
+            //}
+            //else
+            //{
+            //    if (_config.ClientId != null)
+            //    {
+            //        if (log != null)
+            //        {
+            //            log.LogDebug("Still haven't found an access token, so trying to get one via client_credentials");
+            //        }
+            //        _accessToken = await AuthenticateWithToken(log);
+            //    }
+            //}
         }
 
         protected async Task GetFingerprints(ILogger log)
