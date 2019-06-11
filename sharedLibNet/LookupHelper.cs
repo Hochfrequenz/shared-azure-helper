@@ -104,7 +104,7 @@ namespace sharedLibNet
         public async Task<List<BusinessObject>> Suggest(string suggestion, string boe4Type, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
         {
             RemoveAndReAddHeaders(token, apiKey, backendId);
-            var responseMessage = await httpClient.GetAsync($"{lookupURL}/{boe4Type}/{suggestion}");
+            var responseMessage = await httpClient.GetAsync($"{lookupURL}/suggestion/{boe4Type}/{suggestion}");
             string responseContent = await responseMessage.Content.ReadAsStringAsync();
             if (!responseMessage.IsSuccessStatusCode)
             {
