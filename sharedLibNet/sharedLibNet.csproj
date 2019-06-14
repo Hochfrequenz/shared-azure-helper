@@ -23,10 +23,14 @@
     <FileVersion>0.0.31.0</FileVersion>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Hochfrequenz.BO4E.Extensions.Encryption" Version="0.0.22" />
-    <PackageReference Include="Hochfrequenz.BO4Enet" Version="0.0.135" />
-    <PackageReference Include="Hochfrequenz.BO4Enet.DataExchangeFormats" Version="0.0.31" />
+    <PackageReference Include="Hochfrequenz.BO4Enet" Version="0.0.138" />
+    <PackageReference Include="Hochfrequenz.BO4Enet.DataExchangeFormats" Version="0.0.32" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.Azure.EventGrid" Version="3.1.0" />
