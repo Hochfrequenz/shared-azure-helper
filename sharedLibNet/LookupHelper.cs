@@ -162,7 +162,7 @@ namespace sharedLibNet
         /// <param name="apiKey">API key for gateway</param>
         /// <param name="backendId">ID of Backend</param>
         /// <returns></returns>
-        public async Task<GenericLookupResult> LookupJsonWithUserToken(string json, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
+        public async Task<string> LookupJsonWithUserToken(string json, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
         {
             _logger.LogDebug("LookupJsonWithUserToken");
             RemoveAndReAddHeaders(token, apiKey, backendId);
@@ -174,8 +174,7 @@ namespace sharedLibNet
                 return null;
             }
             _logger.LogDebug($"Sucessfully retrieved response with status code {responseMessage.StatusCode}");
-            GenericLookupResult resultObject = DeserializeObjectAndLog<GenericLookupResult>(await responseMessage.Content.ReadAsStringAsync());
-            return resultObject;
+            return await responseMessage.Content.ReadAsStringAsync();
         }
 
         /// <summary>
