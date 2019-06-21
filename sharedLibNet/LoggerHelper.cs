@@ -8,7 +8,10 @@ using BO4E.Extensions.Encryption;
 using EshDataExchangeFormats;
 using Microsoft.Azure.EventGrid;
 using Microsoft.Azure.EventGrid.Models;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sodium;
@@ -22,6 +25,8 @@ namespace sharedLibNet
         protected static EventGridClient _eventGridClient;
         protected static string _topicHostname;
         public const string LogEventName = "HF.EnergyCore.EventLog.Created";
+        protected static CloudStorageAccount _storageAccount = null;
+        protected static CloudBlobClient _blobClient = null;
         /// <summary>
         /// Creates a new logger and logger provider from a newly instantiated LoggerFactory.
         /// </summary>
@@ -209,6 +214,37 @@ namespace sharedLibNet
             catch (Exception exc)
             {
                 return exc.ToString();
+            }
+        }
+        protected static async Task ConnectToBlob(IConfiguration config)
+        {
+            if (_storageAccount == null)
+            {
+                _storageAccount = CloudStorageAccount.Parse(
+                   config["Log:Blob:URL"]);
+                _blobClient = _storageAccount.CreateCloudBlobClient();
+            }
+        }
+        public static async Task StoreLargeLogObject(IConfiguration config, string eventId, string objectName, JObject logData)
+        {
+            await ConnectToBlob(config);
+            var container = _blobClient.GetContainerReference(eventId);
+            await container.CreateIfNotExistsAsync();
+            var blob = container.GetBlockBlobReference(objectName);
+            await blob.UploadTextAsync(JsonConvert.SerializeObject(logData));
+        }
+        public static async Task<JObject> RetrieveLargeLogObject(IConfiguration config, string eventId, string objectName)
+        {
+            await ConnectToBlob(config);
+            var container = _blobClient.GetContainerReference(eventId);
+            try
+            {
+                var blob = container.GetBlockBlobReference(objectName);
+                return JsonConvert.DeserializeObject<JObject>(await blob.DownloadTextAsync());
+            }
+            catch (Exception)
+            {
+                return null;
             }
         }
 
