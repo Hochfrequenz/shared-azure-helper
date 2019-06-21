@@ -25,7 +25,7 @@ namespace sharedLibNet
         {
             public string eventId { get; set; }
             public string logName { get; set; }
-            public JObject content { get; set; }
+            public JToken content { get; set; }
 
         }
         public static HttpClient httpClient = new HttpClient();
@@ -248,7 +248,7 @@ namespace sharedLibNet
             try
             {
                 var blob = container.GetBlockBlobReference(logEntry.logName);
-                logEntry.content = JsonConvert.DeserializeObject<JObject>(await blob.DownloadTextAsync());
+                logEntry.content = JsonConvert.DeserializeObject<JToken>(await blob.DownloadTextAsync());
                 return logEntry;
             }
             catch (Exception)
