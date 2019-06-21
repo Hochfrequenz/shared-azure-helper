@@ -21,6 +21,13 @@ namespace sharedLibNet
 
     public class LoggerHelper
     {
+        public class LargeLog
+        {
+            public string eventId { get; set; }
+            public string logName { get; set; }
+            public JObject content { get; set; }
+
+        }
         public static HttpClient httpClient = new HttpClient();
         protected static EventGridClient _eventGridClient;
         protected static string _topicHostname;
@@ -225,22 +232,24 @@ namespace sharedLibNet
                 _blobClient = _storageAccount.CreateCloudBlobClient();
             }
         }
-        public static async Task StoreLargeLogObject(IConfiguration config, string eventId, string objectName, JObject logData)
+        public static async Task<LargeLog> StoreLargeLogObject(IConfiguration config, LargeLog logEntry)
         {
             await ConnectToBlob(config);
-            var container = _blobClient.GetContainerReference(eventId);
+            var container = _blobClient.GetContainerReference(logEntry.eventId);
             await container.CreateIfNotExistsAsync();
-            var blob = container.GetBlockBlobReference(objectName);
-            await blob.UploadTextAsync(JsonConvert.SerializeObject(logData));
+            var blob = container.GetBlockBlobReference(logEntry.logName);
+            await blob.UploadTextAsync(JsonConvert.SerializeObject(logEntry.content));
+            return new LargeLog() { eventId = logEntry.eventId, logName = logEntry.logName };
         }
-        public static async Task<JObject> RetrieveLargeLogObject(IConfiguration config, string eventId, string objectName)
+        public static async Task<LargeLog> RetrieveLargeLogObject(IConfiguration config, LargeLog logEntry)
         {
             await ConnectToBlob(config);
-            var container = _blobClient.GetContainerReference(eventId);
+            var container = _blobClient.GetContainerReference(logEntry.eventId);
             try
             {
-                var blob = container.GetBlockBlobReference(objectName);
-                return JsonConvert.DeserializeObject<JObject>(await blob.DownloadTextAsync());
+                var blob = container.GetBlockBlobReference(logEntry.logName);
+                logEntry.content = JsonConvert.DeserializeObject<JObject>(await blob.DownloadTextAsync());
+                return logEntry;
             }
             catch (Exception)
             {
