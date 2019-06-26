@@ -8,7 +8,10 @@ using BO4E.Extensions.Encryption;
 using EshDataExchangeFormats;
 using Microsoft.Azure.EventGrid;
 using Microsoft.Azure.EventGrid.Models;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sodium;
@@ -18,10 +21,19 @@ namespace sharedLibNet
 
     public class LoggerHelper
     {
+        public class LargeLog
+        {
+            public string eventId { get; set; }
+            public string logName { get; set; }
+            public JToken content { get; set; }
+
+        }
         public static HttpClient httpClient = new HttpClient();
         protected static EventGridClient _eventGridClient;
         protected static string _topicHostname;
         public const string LogEventName = "HF.EnergyCore.EventLog.Created";
+        protected static CloudStorageAccount _storageAccount = null;
+        protected static CloudBlobClient _blobClient = null;
         /// <summary>
         /// Creates a new logger and logger provider from a newly instantiated LoggerFactory.
         /// </summary>
@@ -209,6 +221,39 @@ namespace sharedLibNet
             catch (Exception exc)
             {
                 return exc.ToString();
+            }
+        }
+        protected static async Task ConnectToBlob(IConfiguration config)
+        {
+            if (_storageAccount == null)
+            {
+                _storageAccount = CloudStorageAccount.Parse(
+                   config["Log:Blob:URL"]);
+                _blobClient = _storageAccount.CreateCloudBlobClient();
+            }
+        }
+        public static async Task<LargeLog> StoreLargeLogObject(IConfiguration config, LargeLog logEntry)
+        {
+            await ConnectToBlob(config);
+            var container = _blobClient.GetContainerReference(logEntry.eventId);
+            await container.CreateIfNotExistsAsync();
+            var blob = container.GetBlockBlobReference(logEntry.logName);
+            await blob.UploadTextAsync(JsonConvert.SerializeObject(logEntry.content));
+            return new LargeLog() { eventId = logEntry.eventId, logName = logEntry.logName };
+        }
+        public static async Task<LargeLog> RetrieveLargeLogObject(IConfiguration config, LargeLog logEntry)
+        {
+            await ConnectToBlob(config);
+            var container = _blobClient.GetContainerReference(logEntry.eventId);
+            try
+            {
+                var blob = container.GetBlockBlobReference(logEntry.logName);
+                logEntry.content = JsonConvert.DeserializeObject<JToken>(await blob.DownloadTextAsync());
+                return logEntry;
+            }
+            catch (Exception)
+            {
+                return null;
             }
         }
 
