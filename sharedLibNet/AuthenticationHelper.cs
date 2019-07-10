@@ -61,7 +61,7 @@ namespace sharedLibNet
         protected string _authURL;
         public RestClient authClient = null;
 
-        [Obsolete("Please use the version to specify with an explicit AuthConfiguration")]
+        [Obsolete("Please use the version to specify with an explicit AuthConfiguration", true)]
         public AuthenticationHelper(string certIssuer, string authURL, IConfiguration config)
         {
             _authURL = authURL;
