@@ -89,6 +89,17 @@ namespace sharedLibNet
 
         public async Task Configure(ILogger log = null)
         {
+            if (log != null)
+            {
+                if (_config == null)
+                {
+                    log.LogCritical($"{nameof(_config)} is null! AuthenticationHelper is going to cause an exception!");
+                }
+                else if (_config.Issuer == null)
+                {
+                    log.LogCritical($"{nameof(_config.Issuer)} is null! AuthenticationHelper is going to cause an exception!");
+                }
+            }
             var issuer = _config.Issuer;
             if (log != null && string.IsNullOrWhiteSpace(issuer))
             {
