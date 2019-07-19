@@ -186,7 +186,7 @@ namespace sharedLibNet
         /// <param name="apiKey">api key for azure</param>
         /// <param name="bobId">unique ID of the backend</param>
         /// <returns>raw lookup response as string in case of success, null in case of failure</returns>
-        public async Task<string> InitialiseSuggestionCache(GenericLookupQuery initialisationQuery, Uri lookupUrl, string token, string apiKey, string encryptionKey, BOBackendId bobId)
+        public async Task<string> InitialiseSuggestionCache(GenericCachingQuery initialisationQuery, Uri lookupUrl, string token, string apiKey, string encryptionKey, BOBackendId bobId)
         {
             _logger.LogDebug("InitialiseSuggestionCache (lookup helper)");
             RemoveAndReAddHeaders(token, apiKey, bobId);

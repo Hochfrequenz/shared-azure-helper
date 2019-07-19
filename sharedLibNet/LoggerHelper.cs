@@ -223,6 +223,7 @@ namespace sharedLibNet
                 return exc.ToString();
             }
         }
+
         protected static async Task ConnectToBlob(IConfiguration config)
         {
             if (_storageAccount == null)
@@ -232,6 +233,7 @@ namespace sharedLibNet
                 _blobClient = _storageAccount.CreateCloudBlobClient();
             }
         }
+
         public static async Task<LargeLog> StoreLargeLogObject(IConfiguration config, LargeLog logEntry)
         {
             await ConnectToBlob(config);
@@ -241,6 +243,7 @@ namespace sharedLibNet
             await blob.UploadTextAsync(JsonConvert.SerializeObject(logEntry.content));
             return new LargeLog() { eventId = logEntry.eventId, logName = logEntry.logName };
         }
+
         public static async Task<LargeLog> RetrieveLargeLogObject(IConfiguration config, LargeLog logEntry)
         {
             await ConnectToBlob(config);
