@@ -191,6 +191,7 @@ namespace sharedLibNet
             _logger.LogDebug("InitialiseSuggestionCache (lookup helper)");
             RemoveAndReAddHeaders(token, apiKey, bobId);
             string serialisedQuery = JsonConvert.SerializeObject(initialisationQuery, new StringEnumConverter());
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.CacheService.ENCRYPTION_KEY_PUBLIC, encryptionKey);
             var responseMessage = await httpClient.PutAsync(cacheUrl, new StringContent(serialisedQuery, System.Text.Encoding.UTF8, MIME_TYPE_JSON));
             if (!responseMessage.IsSuccessStatusCode)
             {
