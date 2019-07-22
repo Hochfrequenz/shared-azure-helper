@@ -186,12 +186,12 @@ namespace sharedLibNet
         /// <param name="apiKey">api key for azure</param>
         /// <param name="bobId">unique ID of the backend</param>
         /// <returns>raw lookup response as string in case of success, null in case of failure</returns>
-        public async Task<string> InitialiseSuggestionCache(GenericCachingQuery initialisationQuery, Uri lookupUrl, string token, string apiKey, string encryptionKey, BOBackendId bobId)
+        public async Task<string> InitialiseSuggestionCache(GenericCachingQuery initialisationQuery, Uri cacheUrl, string token, string apiKey, string encryptionKey, BOBackendId bobId)
         {
             _logger.LogDebug("InitialiseSuggestionCache (lookup helper)");
             RemoveAndReAddHeaders(token, apiKey, bobId);
             string serialisedQuery = JsonConvert.SerializeObject(initialisationQuery, new StringEnumConverter());
-            var responseMessage = await httpClient.PutAsync(lookupUrl, new StringContent(serialisedQuery, System.Text.Encoding.UTF8, MIME_TYPE_JSON));
+            var responseMessage = await httpClient.PutAsync(cacheUrl, new StringContent(serialisedQuery, System.Text.Encoding.UTF8, MIME_TYPE_JSON));
             if (!responseMessage.IsSuccessStatusCode)
             {
                 string responseContent = await responseMessage.Content.ReadAsStringAsync();
