@@ -18,20 +18,30 @@ namespace sharedLibNet
         protected ILogger _logger = null;
         protected const string SYMMETRIC_ENCRYPTION_KEY_HEADER_NAME = "encryptionkey"; // test if this can be replaced
         private const string MIME_TYPE_JSON = "application/json"; // replace with MediaTypeNames.Application.Json as soon as .net core 2.1 is used
-        public LookupHelper(ILogger logger)
+
+        public LookupHelper()
+        {
+            this.httpClient.Timeout = TimeSpan.FromMinutes(10);
+        }
+
+        public LookupHelper(ILogger logger) : this()
         {
             _logger = logger;
+            if (_logger != null)
+            {
+                _logger.LogInformation($"Instantiated {nameof(LookupHelper)}. The HttpClient {nameof(httpClient)} has a timeout of {httpClient.Timeout.TotalSeconds} seconds.");
+            }
         }
 
         public async Task<GenericLookupResult> RetrieveURLs(IList<Bo4eUri> urls, Uri lookupURL, string clientCertString, string apiKey, BOBackendId backendId)
         {
             if (string.IsNullOrWhiteSpace(clientCertString))
             {
-                _logger.LogWarning($"clientCertString is initial: '{clientCertString}'");
+                _logger.LogWarning($"{nameof(clientCertString)} is initial: '{clientCertString}'");
             }
             if (lookupURL == null)
             {
-                _logger.LogCritical("lookupUrl is null!");
+                _logger.LogCritical($"{nameof(lookupURL)} is null!");
             }
             if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.XArrClientCert))
             {
@@ -52,7 +62,7 @@ namespace sharedLibNet
             }
             else
             {
-                _logger.LogWarning($"apiKey is initial: '{apiKey}'");
+                _logger.LogWarning($"{nameof(apiKey)} is initial: '{apiKey}'");
             }
             if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.BACKEND_ID))
             {
