@@ -91,6 +91,28 @@ namespace sharedLibNet
             return resultObject;
         }
 
+        /// <summary>
+        /// checks if login to backend specified by <paramref name="bobId"/> works using the token 
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="apiKey"></param>
+        /// <param name="bobId"></param>
+        /// <returns></returns>
+        public async Task<bool> CheckLogin(Uri lookupBaseUrl, string token, string apiKey, BOBackendId bobId)
+        {
+            if (lookupBaseUrl == null)
+            {
+                throw new ArgumentNullException(nameof(lookupBaseUrl), "lookup Url must not be null.");
+            }
+            if (bobId == null)
+            {
+                throw new ArgumentNullException(nameof(bobId), "Backend ID must not be null.");
+            }
+            RemoveAndReAddHeaders(token, apiKey, bobId);
+            var response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Head, lookupBaseUrl));
+            _logger.LogDebug($"Response has status code {response.StatusCode}. See lookup service logs for details.");
+            return response.IsSuccessStatusCode;
+        }
 
         public async Task<GenericLookupResult> RetrieveURLsWithUserToken(IList<Bo4eUri> urls, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
         {
@@ -183,7 +205,7 @@ namespace sharedLibNet
                 _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase} / {responseContent}; The original request was: {json} POSTed to {lookupURL}");
                 return null;
             }
-            _logger.LogDebug($"Sucessfully retrieved response with status code {responseMessage.StatusCode}");
+            _logger.LogDebug($"Successfully retrieved response with status code {responseMessage.StatusCode}");
             return await responseMessage.Content.ReadAsStringAsync();
         }
 
