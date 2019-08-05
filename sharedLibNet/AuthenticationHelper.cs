@@ -10,6 +10,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using EshDataExchangeFormats;
+using EshDataExchangeFormats.lookup;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -34,6 +35,7 @@ namespace sharedLibNet
         public string[] Issuers { get; set; }
         public string[] Audiences { get; set; }
     }
+
     public class AuthResult
     {
         public ClaimsPrincipal Principal { get; private set; }
@@ -61,6 +63,7 @@ namespace sharedLibNet
         protected string _authURL;
         public RestClient authClient = null;
 
+
         [Obsolete("Please use the version to specify with an explicit AuthConfiguration", true)]
         public AuthenticationHelper(string certIssuer, string authURL, IConfiguration config)
         {
@@ -80,6 +83,7 @@ namespace sharedLibNet
                 Audiences = config.GetSection("AUDIENCES").Get<string[]>()
             };
         }
+
         public AuthenticationHelper(string certIssuer, string authURL, AuthConfiguration config)
         {
             _authURL = authURL;
@@ -160,6 +164,11 @@ namespace sharedLibNet
             this.allowedCertificates = returnObj["fingerprints"].ToObject<List<string>>();
         }
 
+        /*public async Task<string> GetAccessTokenFromRefreshKey(BOBackendId backendId, string apiKey, string refreshKey)
+        {
+
+        }*/
+
         public async Task<AuthResult> Http_CheckAuth(HttpRequest req, ILogger log, string checkForAudience = null)
         {
             using (MiniProfiler.Current.Step("CheckingAuth"))
@@ -194,7 +203,7 @@ namespace sharedLibNet
                 }
                 catch (Exception e)
                 {
-                    log.LogError($"Exception in Authentication Helper Http_CheckAuth: {e}");
+                    log.LogError($"Exception in Authentication Helper {nameof(Http_CheckAuth)}: {e}");
                 }
                 log.LogDebug($"Found authHeaders count:{authHeader.Count}");
                 if (authHeader.Count == 0 || authHeader.Where(head => head.Scheme == "Bearer").Count() == 0)
@@ -324,8 +333,8 @@ namespace sharedLibNet
             }
 
             var request = new RestRequest(Method.POST);
-            request.AddHeader("X-Cert-For", target);
-            request.AddHeader("X-Cert-From", CertIssuer);
+            request.AddHeader(HeaderNames.Auth.CertFor, target);
+            request.AddHeader(HeaderNames.Auth.CertFrom, CertIssuer);
             if (_config.ApiKey != null)
             {
                 request.AddHeader(HeaderNames.Azure.SUBSCRIPTION_KEY, _config.ApiKey);
