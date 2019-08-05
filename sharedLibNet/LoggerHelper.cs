@@ -142,7 +142,7 @@ namespace sharedLibNet
             {
                 httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.HfAuthorization);
             }
-            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.HfAuthorization,"Bearer "+ token);
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.HfAuthorization, "Bearer " + token);
 
             if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Azure.SUBSCRIPTION_KEY) && apiKey != null)
             {
@@ -154,7 +154,7 @@ namespace sharedLibNet
             return await httpClient.PostAsync(url, new StringContent(JsonConvert.SerializeObject(logger.Messages)));
         }
 
-        public static async Task<string> SendLogEvent(string eventId, InMemoryLoggerProvider logger, string subjectPostfix)
+        public static async Task<string> SendLogEvent(string eventId, InMemoryLoggerProvider logger, string subjectPostfix, string eventType = LogEventName)
         {
             string subject = "EventLog";
             if (!string.IsNullOrEmpty(subjectPostfix))
@@ -173,7 +173,7 @@ namespace sharedLibNet
                     eventList.Add(new EventGridEvent()
                     {
                         Id = newId,
-                        EventType = LogEventName,
+                        EventType = eventType,
                         Data = eventData,
                         EventTime = DateTime.UtcNow,
                         Subject = subject,
@@ -296,7 +296,7 @@ namespace sharedLibNet
             {
                 httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.HfAuthorization);
             }
-            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.HfAuthorization,"Bearer "+ token);
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.HfAuthorization, "Bearer " + token);
 
             if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Azure.SUBSCRIPTION_KEY) && apiKey != null)
             {
