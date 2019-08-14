@@ -197,31 +197,24 @@ namespace sharedLibNet
             {
                 subject += subjectPostfix;
             }
-            try
-            {
-                List<EventGridEvent> eventList = new List<EventGridEvent>();
-                dynamic eventData = new ExpandoObject();
-                eventData.eventid = eventId;
-                eventData.logData = logData;
+            List<EventGridEvent> eventList = new List<EventGridEvent>();
+            dynamic eventData = new ExpandoObject();
+            eventData.eventid = eventId;
+            eventData.logData = logData;
 
-                var newId = Guid.NewGuid().ToString();
-                eventList.Add(new EventGridEvent()
-                {
-                    Id = newId,
-                    EventType = LogEventName,
-                    Data = eventData,
-                    EventTime = DateTime.UtcNow,
-                    Subject = subject,
-                    DataVersion = "2.0"
-                });
-
-                await _eventGridClient.PublishEventsAsync(_topicHostname, eventList);
-                return newId;
-            }
-            catch (Exception exc)
+            var newId = Guid.NewGuid().ToString();
+            eventList.Add(new EventGridEvent()
             {
-                return exc.ToString();
-            }
+                Id = newId,
+                EventType = LogEventName,
+                Data = eventData,
+                EventTime = DateTime.UtcNow,
+                Subject = subject,
+                DataVersion = "2.0"
+            });
+
+            await _eventGridClient.PublishEventsAsync(_topicHostname, eventList);
+            return newId;
         }
 
         protected static async Task ConnectToBlob(IConfiguration config)
