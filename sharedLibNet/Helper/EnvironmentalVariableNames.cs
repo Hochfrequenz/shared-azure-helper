@@ -53,5 +53,31 @@
         /// system context/environment; e.g. 'Stage' or 'Production'
         /// </summary>
         public const string SYSTEM_ENVIRONMENT = "Environment";
+
+        /// <summary>
+        /// requested audience for the jwt token
+        /// </summary>
+        public const string ENV_AUDIENCE = "Auth0:Audience";
+
+        /// <summary>
+        /// issuer of the JWT token
+        /// </summary>
+        public const string ENV_ISSUER = "Auth0:Issuer";
+
+        /// <summary>
+        /// name of the environment variable containing the client ID for SAP Cloud Connector
+        /// </summary>
+        public const string ENV_SCC_CLIENT = "CloudConnector:ClientId";
+
+        /// <summary>
+        /// name of the environment variable containing the secret for the client specified in <see cref="ENV_SCC_CLIENT"/>
+        /// </summary>
+        public const string ENV_SCC_SECRET = "CloudConnector:ClientSecret";
+
+
+        /// <summary>
+        /// name of the environment variable containing the URL of the cloud connector authentication service
+        /// </summary>
+        public const string ENV_SCC_AUTH_URL = "CloudConnector:Auth:URL";
     }
 }
