@@ -157,43 +157,54 @@ namespace sharedLibNet
 
         protected const string DEFAULT_SUBJECT = "EventLog";
 
-        public static async Task<string> SendLogEvent(string eventId, InMemoryLoggerProvider logger, string subjectPostfix, string eventType = LogEventName)
+        public static async Task<string> SendLogEvent(string eventId, InMemoryLoggerProvider logger, string subjectPostfix, string eventType = LogEventName, bool silent = true)
         {
-            string subject = DEFAULT_SUBJECT;
-            if (!string.IsNullOrEmpty(subjectPostfix))
+            using (MiniProfiler.Current.Step(nameof(SendLogEvent)))
             {
-                subject += subjectPostfix;
-            }
-            try
-            {
-                IList<EventGridEvent> eventList = new List<EventGridEvent>();
-                foreach (var msg in logger.Messages)
+                try
                 {
-                    dynamic eventData = new ExpandoObject();
-                    eventData.eventid = eventId;
-                    eventData.message = msg;
-                    var newId = Guid.NewGuid().ToString();
-                    eventList.Add(new EventGridEvent()
+                    string subject = DEFAULT_SUBJECT;
+                    if (!string.IsNullOrEmpty(subjectPostfix))
                     {
-                        Id = newId,
-                        EventType = eventType,
-                        Data = eventData,
-                        EventTime = DateTime.UtcNow,
-                        Subject = subject,
-                        DataVersion = "2.0"
-                    });
-                }
+                        subject += subjectPostfix;
+                    }
 
-                await _eventGridClient.PublishEventsAsync(_topicHostname, eventList);
-                return "OK";
-            }
-            catch (Exception exc)
-            {
-                return exc.ToString();
+                    IList<EventGridEvent> eventList = new List<EventGridEvent>();
+                    foreach (var msg in logger.Messages)
+                    {
+                        dynamic eventData = new ExpandoObject();
+                        eventData.eventid = eventId;
+                        eventData.message = msg;
+                        var newId = Guid.NewGuid().ToString();
+                        eventList.Add(new EventGridEvent()
+                        {
+                            Id = newId,
+                            EventType = eventType,
+                            Data = eventData,
+                            EventTime = DateTime.UtcNow,
+                            Subject = subject,
+                            DataVersion = "2.0"
+                        });
+                    }
+
+                    await _eventGridClient.PublishEventsAsync(_topicHostname, eventList);
+                    return "OK";
+                }
+                catch (Exception e)
+                {
+                    if (silent)
+                    {
+                        return e.Message;
+                    }
+                    else
+                    {
+                        throw e;
+                    }
+                }
             }
         }
 
-        public static async Task<string> SendLogEventData(string eventId, JObject logData, string subjectPostfix, bool silent = true)
+        public static async Task<string> SendLogEventData(string eventId, JObject logData, string subjectPostfix, string eventType = LogEventName, bool silent = true)
         {
             using (MiniProfiler.Current.Step(nameof(SendLogEventData)))
             {
@@ -213,7 +224,7 @@ namespace sharedLibNet
                     eventList.Add(new EventGridEvent()
                     {
                         Id = newId,
-                        EventType = LogEventName,
+                        EventType = eventType,
                         Data = eventData,
                         EventTime = DateTime.UtcNow,
                         Subject = subject,
