@@ -15,6 +15,7 @@ using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sodium;
+using StackExchange.Profiling;
 
 namespace sharedLibNet
 {
@@ -154,9 +155,11 @@ namespace sharedLibNet
             return await httpClient.PostAsync(url, new StringContent(JsonConvert.SerializeObject(logger.Messages)));
         }
 
+        protected const string DEFAULT_SUBJECT = "EventLog";
+
         public static async Task<string> SendLogEvent(string eventId, InMemoryLoggerProvider logger, string subjectPostfix, string eventType = LogEventName)
         {
-            string subject = "EventLog";
+            string subject = DEFAULT_SUBJECT;
             if (!string.IsNullOrEmpty(subjectPostfix))
             {
                 subject += subjectPostfix;
@@ -190,31 +193,52 @@ namespace sharedLibNet
             }
         }
 
-        public static async Task<string> SendLogEventData(string eventId, JObject logData, string subjectPostfix)
+        public static async Task<string> SendLogEventData(string eventId, JObject logData, string subjectPostfix, bool silent = true)
         {
-            string subject = "EventLog";
-            if (!string.IsNullOrEmpty(subjectPostfix))
+            using (MiniProfiler.Current.Step(nameof(SendLogEventData)))
             {
-                subject += subjectPostfix;
+                try
+                {
+                    string subject = DEFAULT_SUBJECT;
+                    if (!string.IsNullOrEmpty(subjectPostfix))
+                    {
+                        subject += subjectPostfix;
+                    }
+                    List<EventGridEvent> eventList = new List<EventGridEvent>();
+                    dynamic eventData = new ExpandoObject();
+                    eventData.eventid = eventId;
+                    eventData.logData = logData;
+
+                    var newId = Guid.NewGuid().ToString();
+                    eventList.Add(new EventGridEvent()
+                    {
+                        Id = newId,
+                        EventType = LogEventName,
+                        Data = eventData,
+                        EventTime = DateTime.UtcNow,
+                        Subject = subject,
+                        DataVersion = "2.0"
+                    });
+
+                    await _eventGridClient.PublishEventsAsync(_topicHostname, eventList);
+                    return newId;
+                }
+                catch (Exception e)
+                {
+                    if (silent)
+                    {
+                        return e.Message;
+                    }
+                    else
+                    {
+                        throw e;
+                    }
+                }
+                finally
+                {
+
+                }
             }
-            List<EventGridEvent> eventList = new List<EventGridEvent>();
-            dynamic eventData = new ExpandoObject();
-            eventData.eventid = eventId;
-            eventData.logData = logData;
-
-            var newId = Guid.NewGuid().ToString();
-            eventList.Add(new EventGridEvent()
-            {
-                Id = newId,
-                EventType = LogEventName,
-                Data = eventData,
-                EventTime = DateTime.UtcNow,
-                Subject = subject,
-                DataVersion = "2.0"
-            });
-
-            await _eventGridClient.PublishEventsAsync(_topicHostname, eventList);
-            return newId;
         }
 
         protected static async Task ConnectToBlob(IConfiguration config)
@@ -247,7 +271,7 @@ namespace sharedLibNet
                 logEntry.content = JsonConvert.DeserializeObject<JToken>(await blob.DownloadTextAsync());
                 return logEntry;
             }
-            catch (Exception)
+            catch (Exception) // ToDo: fix pokemon catching
             {
                 return null;
             }
