@@ -15,6 +15,7 @@ using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Sodium;
+using StackExchange.Profiling;
 
 namespace sharedLibNet
 {
@@ -154,21 +155,71 @@ namespace sharedLibNet
             return await httpClient.PostAsync(url, new StringContent(JsonConvert.SerializeObject(logger.Messages)));
         }
 
-        public static async Task<string> SendLogEvent(string eventId, InMemoryLoggerProvider logger, string subjectPostfix, string eventType = LogEventName)
+        protected const string DEFAULT_SUBJECT = "EventLog";
+
+        public static async Task<string> SendLogEvent(string eventId, InMemoryLoggerProvider logger, string subjectPostfix, string eventType = LogEventName, bool silent = true)
         {
-            string subject = "EventLog";
-            if (!string.IsNullOrEmpty(subjectPostfix))
+            using (MiniProfiler.Current.Step(nameof(SendLogEvent)))
             {
-                subject += subjectPostfix;
-            }
-            try
-            {
-                IList<EventGridEvent> eventList = new List<EventGridEvent>();
-                foreach (var msg in logger.Messages)
+                try
                 {
+                    string subject = DEFAULT_SUBJECT;
+                    if (!string.IsNullOrEmpty(subjectPostfix))
+                    {
+                        subject += subjectPostfix;
+                    }
+
+                    IList<EventGridEvent> eventList = new List<EventGridEvent>();
+                    foreach (var msg in logger.Messages)
+                    {
+                        dynamic eventData = new ExpandoObject();
+                        eventData.eventid = eventId;
+                        eventData.message = msg;
+                        var newId = Guid.NewGuid().ToString();
+                        eventList.Add(new EventGridEvent()
+                        {
+                            Id = newId,
+                            EventType = eventType,
+                            Data = eventData,
+                            EventTime = DateTime.UtcNow,
+                            Subject = subject,
+                            DataVersion = "2.0"
+                        });
+                    }
+
+                    await _eventGridClient.PublishEventsAsync(_topicHostname, eventList);
+                    return "OK";
+                }
+                catch (Exception e)
+                {
+                    if (silent)
+                    {
+                        return e.Message;
+                    }
+                    else
+                    {
+                        throw e;
+                    }
+                }
+            }
+        }
+
+        public static async Task<string> SendLogEventData(string eventId, JObject logData, string subjectPostfix, string eventType = LogEventName, bool silent = true)
+        {
+            using (MiniProfiler.Current.Step(nameof(SendLogEventData)))
+            {
+                try
+                {
+                    string subject = DEFAULT_SUBJECT;
+                    if (!string.IsNullOrEmpty(subjectPostfix))
+                    {
+                        subject += subjectPostfix;
+                    }
+                    List<EventGridEvent> eventList = new List<EventGridEvent>();
                     dynamic eventData = new ExpandoObject();
                     eventData.eventid = eventId;
-                    eventData.message = msg;
+                    eventData.logData = logData;
+
                     var newId = Guid.NewGuid().ToString();
                     eventList.Add(new EventGridEvent()
                     {
@@ -179,48 +230,25 @@ namespace sharedLibNet
                         Subject = subject,
                         DataVersion = "2.0"
                     });
+
+                    await _eventGridClient.PublishEventsAsync(_topicHostname, eventList);
+                    return newId;
                 }
-
-                await _eventGridClient.PublishEventsAsync(_topicHostname, eventList);
-                return "OK";
-            }
-            catch (Exception exc)
-            {
-                return exc.ToString();
-            }
-        }
-
-        public static async Task<string> SendLogEventData(string eventId, JObject logData, string subjectPostfix)
-        {
-            string subject = "EventLog";
-            if (!string.IsNullOrEmpty(subjectPostfix))
-            {
-                subject += subjectPostfix;
-            }
-            try
-            {
-                List<EventGridEvent> eventList = new List<EventGridEvent>();
-                dynamic eventData = new ExpandoObject();
-                eventData.eventid = eventId;
-                eventData.logData = logData;
-
-                var newId = Guid.NewGuid().ToString();
-                eventList.Add(new EventGridEvent()
+                catch (Exception e)
                 {
-                    Id = newId,
-                    EventType = LogEventName,
-                    Data = eventData,
-                    EventTime = DateTime.UtcNow,
-                    Subject = subject,
-                    DataVersion = "2.0"
-                });
+                    if (silent)
+                    {
+                        return e.Message;
+                    }
+                    else
+                    {
+                        throw e;
+                    }
+                }
+                finally
+                {
 
-                await _eventGridClient.PublishEventsAsync(_topicHostname, eventList);
-                return newId;
-            }
-            catch (Exception exc)
-            {
-                return exc.ToString();
+                }
             }
         }
 
@@ -254,7 +282,7 @@ namespace sharedLibNet
                 logEntry.content = JsonConvert.DeserializeObject<JToken>(await blob.DownloadTextAsync());
                 return logEntry;
             }
-            catch (Exception)
+            catch (Exception) // ToDo: fix pokemon catching
             {
                 return null;
             }
