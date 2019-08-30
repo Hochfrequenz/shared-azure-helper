@@ -9,6 +9,7 @@ using EshDataExchangeFormats.lookup;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using StackExchange.Profiling;
 
 namespace sharedLibNet
 {
@@ -16,7 +17,7 @@ namespace sharedLibNet
     {
         protected HttpClient httpClient = new HttpClient();
         protected ILogger _logger = null;
-        protected const string SYMMETRIC_ENCRYPTION_KEY_HEADER_NAME = "encryptionkey"; // test if this can be replaced
+
         private const string MIME_TYPE_JSON = "application/json"; // replace with MediaTypeNames.Application.Json as soon as .net core 2.1 is used
 
         public LookupHelper()
@@ -220,19 +221,21 @@ namespace sharedLibNet
         /// <returns>raw lookup response as string in case of success, null in case of failure</returns>
         public async Task<string> InitialiseSuggestionCache(GenericCachingQuery initialisationQuery, Uri cacheUrl, string token, string apiKey, string encryptionKey, BOBackendId bobId)
         {
-            _logger.LogDebug("InitialiseSuggestionCache (lookup helper)");
-            RemoveAndReAddHeaders(token, apiKey, bobId);
-            string serialisedQuery = JsonConvert.SerializeObject(initialisationQuery, new StringEnumConverter());
-            httpClient.DefaultRequestHeaders.Add(HeaderNames.CacheService.ENCRYPTION_KEY_PUBLIC, encryptionKey);
-            var responseMessage = await httpClient.PutAsync(cacheUrl, new StringContent(serialisedQuery, System.Text.Encoding.UTF8, MIME_TYPE_JSON));
-            if (!responseMessage.IsSuccessStatusCode)
+            using (MiniProfiler.Current.Step($"{nameof(InitialiseSuggestionCache)} ({nameof(LookupHelper)})"))
             {
-                string responseContent = await responseMessage.Content.ReadAsStringAsync();
-                _logger.LogCritical($"Could not perform cache initialisation: {responseMessage.ReasonPhrase}");
-                return null;
+                RemoveAndReAddHeaders(token, apiKey, bobId);
+                string serialisedQuery = JsonConvert.SerializeObject(initialisationQuery, new StringEnumConverter());
+                httpClient.DefaultRequestHeaders.Add(HeaderNames.CacheService.ENCRYPTION_KEY_SHARED_SECRET, encryptionKey);
+                var responseMessage = await httpClient.PutAsync(cacheUrl, new StringContent(serialisedQuery, System.Text.Encoding.UTF8, MIME_TYPE_JSON));
+                if (!responseMessage.IsSuccessStatusCode)
+                {
+                    string responseContent = await responseMessage.Content.ReadAsStringAsync();
+                    _logger.LogCritical($"Could not perform cache initialisation: {responseMessage.ReasonPhrase}");
+                    return null;
+                }
+                _logger.LogDebug($"Successfully initialised cache with status code {responseMessage.StatusCode}");
+                return await responseMessage.Content.ReadAsStringAsync();
             }
-            _logger.LogDebug($"Successfully initialised cache with status code {responseMessage.StatusCode}");
-            return await responseMessage.Content.ReadAsStringAsync();
         }
 
         private HttpClient RemoveAndReAddHeaders(string token, string apiKey, BOBackendId backendId)
