@@ -28,9 +28,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Hochfrequenz.BO4E.Extensions.Encryption" Version="0.0.175-CI-20190903-075515" />
-    <PackageReference Include="Hochfrequenz.BO4Enet" Version="0.0.175-CI-20190903-075515" />
-    <PackageReference Include="Hochfrequenz.BO4Enet.DataExchangeFormats" Version="0.0.61-CI-20190902-095317" />
+    <PackageReference Include="Hochfrequenz.BO4E.Extensions.Encryption" Version="0.0.176-CI-20190909-141300" />
+    <PackageReference Include="Hochfrequenz.BO4Enet" Version="0.0.176-CI-20190909-141300" />
+    <PackageReference Include="Hochfrequenz.BO4Enet.DataExchangeFormats" Version="0.0.63-CI-20190909-154934" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.Azure.EventGrid" Version="3.1.0" />
