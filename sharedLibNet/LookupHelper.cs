@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using BO4E.BO;
@@ -13,18 +14,38 @@ using StackExchange.Profiling;
 
 namespace sharedLibNet
 {
+    /// <summary>
+    /// The LookupHelper hides raw HTTP requests from the the application.
+    /// </summary>
     public class LookupHelper
     {
-        protected HttpClient httpClient = new HttpClient();
+        protected static HttpClient httpClient = new HttpClient();
         protected ILogger _logger = null;
 
         private const string MIME_TYPE_JSON = "application/json"; // replace with MediaTypeNames.Application.Json as soon as .net core 2.1 is used
 
-        public LookupHelper()
+        private const int DEFAULT_TIMEOUT_MINUTES = 10;
+
+        /// <summary>
+        /// Initializes the static http client with a default timeout of <see cref="DEFAULT_TIMEOUT_MINUTES"/> minutes.
+        /// </summary>
+        static LookupHelper()
         {
-            this.httpClient.Timeout = TimeSpan.FromMinutes(10);
+            httpClient.Timeout = TimeSpan.FromMinutes(DEFAULT_TIMEOUT_MINUTES);
         }
 
+        /// <summary>
+        /// public constructor for the sake of a public (instance) constructor. See also the static <seealso cref="LookupHelper()"/>.
+        /// </summary>
+        public LookupHelper()
+        {
+
+        }
+
+        /// <summary>
+        /// same as <see cref="LookupHelper()"/> but with a logger
+        /// </summary>
+        /// <param name="logger"></param>
         public LookupHelper(ILogger logger) : this()
         {
             _logger = logger;
@@ -33,7 +54,7 @@ namespace sharedLibNet
                 _logger.LogInformation($"Instantiated {nameof(LookupHelper)}. The HttpClient {nameof(httpClient)} has a timeout of {httpClient.Timeout.TotalSeconds} seconds.");
             }
         }
-
+        // todo: docstring
         public async Task<GenericLookupResult> RetrieveURLs(IList<Bo4eUri> urls, Uri lookupURL, string clientCertString, string apiKey, BOBackendId backendId)
         {
             if (string.IsNullOrWhiteSpace(clientCertString))
@@ -95,11 +116,11 @@ namespace sharedLibNet
         /// <summary>
         /// checks if login to backend specified by <paramref name="bobId"/> works using the token 
         /// </summary>
-        /// <param name="token"></param>
-        /// <param name="apiKey"></param>
-        /// <param name="bobId"></param>
-        /// <returns></returns>
-        public async Task<bool> CheckLogin(Uri lookupBaseUrl, string token, string apiKey, BOBackendId bobId)
+        /// <param name="token">JWToken</param>
+        /// <param name="apiKey">hf-api api key</param>
+        /// <param name="bobId">ID of backend</param>
+        /// <returns>Tuple containing true/false depending if login was successful and returned status code</returns>
+        public async Task<Tuple<bool, HttpStatusCode>> CheckLogin(Uri lookupBaseUrl, string token, string apiKey, BOBackendId bobId)
         {
             if (lookupBaseUrl == null)
             {
@@ -110,11 +131,22 @@ namespace sharedLibNet
                 throw new ArgumentNullException(nameof(bobId), "Backend ID must not be null.");
             }
             RemoveAndReAddHeaders(token, apiKey, bobId);
-            var response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Head, lookupBaseUrl));
+            HttpResponseMessage response;
+            try
+            {
+                response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Head, lookupBaseUrl));
+            }
+            catch (Exception e)
+            {
+                _logger.LogError($"Request (try login) failed. {nameof(lookupBaseUrl)}: '{lookupBaseUrl}', {nameof(token)}: '{token}', {nameof(bobId)}: '{bobId}'; Exception: {e}.");
+                _logger.LogInformation($"Returning negative result with status code {HttpStatusCode.BadGateway} / 502");
+                return new Tuple<bool, HttpStatusCode>(false, HttpStatusCode.BadGateway);
+            }
             _logger.LogDebug($"Response has status code {response.StatusCode}. See lookup service logs for details.");
-            return response.IsSuccessStatusCode;
+            return new Tuple<bool, HttpStatusCode>(response.IsSuccessStatusCode, response.StatusCode);
         }
 
+        // todo: docstring
         public async Task<GenericLookupResult> RetrieveURLsWithUserToken(IList<Bo4eUri> urls, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
         {
             RemoveAndReAddHeaders(token, apiKey, backendId);
@@ -134,6 +166,8 @@ namespace sharedLibNet
             GenericLookupResult resultObject = DeserializeObjectAndLog<GenericLookupResult>(responseContent);
             return resultObject;
         }
+
+        // todo: docstring
         public async Task<List<BusinessObject>> Suggest(string suggestion, string boe4Type, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
         {
             RemoveAndReAddHeaders(token, apiKey, backendId);
