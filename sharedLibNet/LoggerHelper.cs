@@ -63,7 +63,7 @@ namespace sharedLibNet
         /// <param name="sensitive">set true if log message contains sensitive, privacy relevant or confidential information</param>
         /// <param name="key">base64 encoded public key (using libsodium PublicKeyBox encryption standard)</param>
         /// <returns></returns>
-        public static string CreateTraceObject(string content, bool sensitive = false, string publicKey = null)
+        public static string CreateTraceObject(string content, bool sensitive = false,  string publicKey = null, string id = null)
         {
             dynamic obj = new ExpandoObject();
             obj.Sensitive = sensitive;
@@ -82,14 +82,21 @@ namespace sharedLibNet
                 {
                     throw new FormatException($"The provided public key string '{publicKey}' is no valid base64 string: {e.Message}");
                 }
-                KeyPair asykeyPairSender = PublicKeyBox.GenerateKeyPair(); // newly generated every single time???
-                AsymmetricEncrypter enc = new AsymmetricEncrypter(asykeyPairSender);
-                LogObject logObject = new LogObject
+                if (id == null)
                 {
-                    datetime = DateTime.UtcNow,
-                    logMessage = content
-                };
-                obj.Content = enc.Encrypt(logObject, publicKey);
+                    id = Guid.NewGuid().ToString();
+                }
+                KeyPair asykeyPairSender = PublicKeyBox.GenerateKeyPair(); // newly generated every single time???
+                using (AsymmetricEncrypter enc = new AsymmetricEncrypter(asykeyPairSender))
+                {
+                    LogObject logObject = new LogObject
+                    {
+                        datetime = DateTime.UtcNow,
+                        id = id,
+                        logMessage = content
+                    };
+                    obj.Content = enc.Encrypt(logObject, publicKey);
+                }
             }
             else
             {
