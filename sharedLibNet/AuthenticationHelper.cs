@@ -59,7 +59,7 @@ namespace sharedLibNet
         protected AuthConfiguration _config = null;
         public readonly string CertIssuer = "<PassName>";
         public List<string> allowedCertificates = null;
-        protected HttpClient httpClient = new HttpClient();
+        protected static HttpClient httpClient = new HttpClient();
         protected string _authURL;
         public RestClient authClient = null;
 
@@ -91,6 +91,7 @@ namespace sharedLibNet
             _config = config;
         }
 
+        // todo: docstring
         public async Task Configure(ILogger log = null)
         {
             if (log != null)
@@ -169,6 +170,7 @@ namespace sharedLibNet
 
         }*/
 
+        // todo: docstring
         public async Task<AuthResult> Http_CheckAuth(HttpRequest req, ILogger log, string checkForAudience = null)
         {
             using (MiniProfiler.Current.Step("CheckingAuth"))
@@ -301,6 +303,7 @@ namespace sharedLibNet
             }
         }
 
+        // todo: docstring
         public async Task<string> AuthenticateWithCert(string target, bool overriding = false, ILogger log = null)
         {
             if (!overriding && _certStrings.ContainsKey(target))
@@ -362,6 +365,7 @@ namespace sharedLibNet
             return response.Content;
         }
 
+        // todo: docstring
         public async Task<string> AuthenticateWithToken(ILogger log = null)
         {
             try
@@ -448,6 +452,7 @@ namespace sharedLibNet
             }
         }
 
+        // todo: docstring
         public async Task<AuthResult> ValidateTokenAsync(string value, ILogger log = null, string checkForAudience = null)
         {
             if (_configurationManager == null)
