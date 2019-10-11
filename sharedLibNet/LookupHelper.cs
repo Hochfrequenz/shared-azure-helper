@@ -58,7 +58,8 @@ namespace sharedLibNet
                 _logger.LogInformation($"Instantiated {nameof(LookupHelper)}. The HttpClient {nameof(httpClient)} has a timeout of {httpClient.Timeout.TotalSeconds} seconds.");
             }
         }
-        // todo: docstring
+
+        // todo @hamid docstring including <exception> tag.
         public async Task<GenericLookupResult> RetrieveURLs(IList<Bo4eUri> urls, Uri lookupURL, string clientCertString, string apiKey, BOBackendId backendId)
         {
             if (string.IsNullOrWhiteSpace(clientCertString))
@@ -157,7 +158,7 @@ namespace sharedLibNet
             return new Tuple<bool, HttpStatusCode>(response.IsSuccessStatusCode, response.StatusCode);
         }
 
-        // todo: docstring
+        // todo @hamid docstring inlcuding exception tag
         public async Task<GenericLookupResult> RetrieveURLsWithUserToken(IList<Bo4eUri> urls, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
         {
             RemoveAndReAddHeaders(token, apiKey, backendId);
