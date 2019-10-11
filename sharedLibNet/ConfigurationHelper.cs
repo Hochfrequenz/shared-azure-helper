@@ -17,7 +17,7 @@ namespace sharedLibNet
         private readonly bool _silentFailure;
 
         /// <summary>
-        /// 
+        /// @hamid add docstring here
         /// </summary>
         /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
         public ConfigurationHelper(bool silentFailure = true)
@@ -25,7 +25,7 @@ namespace sharedLibNet
             this._silentFailure = silentFailure;
         }
         /// <summary>
-        /// 
+        /// qhamid add docstring here
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
@@ -68,13 +68,15 @@ namespace sharedLibNet
             {
                 result = JsonConvert.DeserializeObject<List<Stage>>(await responseMessage.Content.ReadAsStringAsync());
             }
-            catch (Exception e)
+            catch (Exception e) // todo: no pokemon exceptio nhandling. Probably we'll only need to catch the JsonReaderException
             {
                 _logger.LogError($"Response could not be deserialied: {e}");
                 throw e;
             }
             return result;
         }
+
+        // todo: docstring
         public async Task<List<Stage>> GetConfigurationWithToken(string token, string client, string app, string configURL,string apiKey)
         {
             dynamic config = new ExpandoObject();
