@@ -62,6 +62,7 @@ namespace sharedLibNet
         protected static HttpClient httpClient = new HttpClient();
         protected string _authURL;
         public RestClient authClient = null;
+        protected readonly bool _silentFailure;
 
 
         [Obsolete("Please use the version to specify with an explicit AuthConfiguration", true)]
@@ -83,8 +84,22 @@ namespace sharedLibNet
                 Audiences = config.GetSection("AUDIENCES").Get<string[]>()
             };
         }
-
-        public AuthenticationHelper(string certIssuer, string authURL, AuthConfiguration config)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
+        public AuthenticationHelper(bool silentFailure = true)
+        {
+            this._silentFailure = silentFailure;
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="certIssuer"></param>
+        /// <param name="authURL"></param>
+        /// <param name="config"></param>
+        /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
+        public AuthenticationHelper(string certIssuer, string authURL, AuthConfiguration config, bool silentFailure = true) :this(silentFailure)
         {
             _authURL = authURL;
             CertIssuer = certIssuer;
@@ -237,7 +252,10 @@ namespace sharedLibNet
                             if (CN != CertIssuer)
                             {
                                 log.LogCritical($"Certificate has wrong CN {CN} instead of {CertIssuer}");
-                                return null;
+                                if (_silentFailure)
+                                    return null;
+                                else
+                                    throw new HfException($"Certificate has wrong CN {CN} instead of {CertIssuer}");
                             }
                             using (MiniProfiler.Current.Step("CheckingFingerprint"))
                             {
@@ -256,7 +274,10 @@ namespace sharedLibNet
                                     else
                                     {
                                         log.LogCritical("Cert is not allowed. Reject; returning null");
-                                        return null;
+                                        if (_silentFailure)
+                                            return null;
+                                        else
+                                            throw new HfException("Cert is not allowed. Reject; returning null");
                                     }
                                 }
                             }
@@ -264,13 +285,19 @@ namespace sharedLibNet
                         catch (Exception e)
                         {
                             log.LogCritical($"Could not parse Certificate: certString = {certString}: Exception = {e}; returning null");
-                            return null;
+                            if (_silentFailure)
+                                return null;
+                            else
+                                throw new HfException(e.Message);
                         }
                     }
                     else
                     {
                         log.LogCritical($"Client Cert header not given; returning null");
-                        return null;
+                        if (_silentFailure)
+                            return null;
+                        else
+                            throw new HfException($"Client Cert header not given; returning null");
                     }
                 }
                 else
@@ -293,12 +320,18 @@ namespace sharedLibNet
                         {
                             log.LogWarning($"Catched ArgumentException in ValidateTokenAsync. Probably due to malformed token: {ae.Message}. Returning null!");
                             log.LogDebug($"The stacktrace of the ArgumentException is: {ae.StackTrace}");
-                            return null;
+                            if (_silentFailure)
+                                return null;
+                            else
+                                throw new HfException($"Catched ArgumentException in ValidateTokenAsync. Probably due to malformed token: {ae.Message}. Returning null!");
                         }
                     }
                     //if we get here we haven't found a valid header
                     log.LogCritical($"No valid token found");
-                    return null;
+                    if (_silentFailure)
+                        return null;
+                    else
+                        throw new HfException($"No valid token found");
                 }
             }
         }

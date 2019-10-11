@@ -14,7 +14,22 @@ namespace sharedLibNet
     {
         protected HttpClient httpClient = new HttpClient();
         protected ILogger _logger = null;
-        public ConfigurationHelper(ILogger logger)
+        private readonly bool _silentFailure;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
+        public ConfigurationHelper(bool silentFailure = true)
+        {
+            this._silentFailure = silentFailure;
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
+        public ConfigurationHelper(ILogger logger, bool silentFailure = true):this(silentFailure)
         {
             _logger = logger;
         }
@@ -38,7 +53,14 @@ namespace sharedLibNet
                 _logger.LogCritical($"Could not get configuration: {responseMessage.ReasonPhrase}; returning null");
                 var responseContent = await responseMessage.Content.ReadAsStringAsync();
                 _logger.LogCritical(responseContent);
-                return null;
+                if (_silentFailure)
+                {
+                    return null;
+                }
+                else
+                {
+                    throw new HfException(responseMessage);
+                }
             }
             _logger.LogDebug($"Successfully retrieved POST response with status code {responseMessage}");
             List<Stage> result;
@@ -65,7 +87,14 @@ namespace sharedLibNet
                 _logger.LogCritical($"Could not get configuration: {responseMessage.ReasonPhrase}; returning null");
                 var responseContent = await responseMessage.Content.ReadAsStringAsync();
                 _logger.LogCritical(responseContent);
-                return null;
+                if (_silentFailure)
+                {
+                    return null;
+                }
+                else
+                {
+                    throw new HfException(responseMessage);
+                }
             }
             _logger.LogDebug($"Successfully retrieved POST response with status code {responseMessage}");
             List<Stage> result;

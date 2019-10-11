@@ -22,6 +22,8 @@ namespace sharedLibNet
         protected static HttpClient httpClient = new HttpClient();
         protected ILogger _logger = null;
 
+        protected readonly bool _silentFailure;
+
         private const string MIME_TYPE_JSON = "application/json"; // replace with MediaTypeNames.Application.Json as soon as .net core 2.1 is used
 
         private const int DEFAULT_TIMEOUT_MINUTES = 10;
@@ -37,16 +39,18 @@ namespace sharedLibNet
         /// <summary>
         /// public constructor for the sake of a public (instance) constructor. See also the static <seealso cref="LookupHelper()"/>.
         /// </summary>
-        public LookupHelper()
+        /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
+        public LookupHelper(bool silentFailure = true)
         {
-
+            this._silentFailure = silentFailure;
         }
 
         /// <summary>
         /// same as <see cref="LookupHelper()"/> but with a logger
         /// </summary>
         /// <param name="logger"></param>
-        public LookupHelper(ILogger logger) : this()
+        /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
+        public LookupHelper(ILogger logger, bool silentFailure = true) : this(silentFailure)
         {
             _logger = logger;
             if (_logger != null)
@@ -105,7 +109,14 @@ namespace sharedLibNet
             {
                 string responseContentPost = await responseMessage.Content.ReadAsStringAsync();
                 _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase} / {responseContentPost}; The original request was: {requestBody} POSTed to {lookupURL}");
-                return null;
+                if (_silentFailure)
+                {
+                    return null;
+                }
+                else
+                {
+                    throw new HfException(responseMessage);
+                }
             }
 
             string responseContent = await responseMessage.Content.ReadAsStringAsync();
@@ -161,7 +172,14 @@ namespace sharedLibNet
             {
                 _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase} / {responseContent}; The original request was: {requestBody} POSTed to {lookupURL}");
                 _logger.LogDebug($"Returning null from lookup helper because of negative response code '{responseMessage.StatusCode}'");
-                return null;
+                if (_silentFailure)
+                {
+                    return null;
+                }
+                else
+                {
+                    throw new HfException(responseMessage);
+                }
             }
             GenericLookupResult resultObject = DeserializeObjectAndLog<GenericLookupResult>(responseContent);
             return resultObject;
@@ -176,7 +194,14 @@ namespace sharedLibNet
             if (!responseMessage.IsSuccessStatusCode)
             {
                 _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase} / {responseContent}; The original request was: {suggestion} GETed from {lookupURL}");
-                return null;
+                if (_silentFailure)
+                {
+                    return null;
+                }
+                else
+                {
+                    throw new HfException(responseMessage);
+                }
             }
             List<BusinessObject> resultObject = DeserializeObjectAndLog<List<BusinessObject>>(responseContent);
             return resultObject;
@@ -238,7 +263,14 @@ namespace sharedLibNet
             {
                 string responseContent = await responseMessage.Content.ReadAsStringAsync();
                 _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase} / {responseContent}; The original request was: {json} POSTed to {lookupURL}");
-                return null;
+                if (_silentFailure)
+                {
+                    return null;
+                }
+                else
+                {
+                    throw new HfException(responseMessage);
+                }
             }
             _logger.LogDebug($"Successfully retrieved response with status code {responseMessage.StatusCode}");
             return await responseMessage.Content.ReadAsStringAsync();
@@ -265,7 +297,14 @@ namespace sharedLibNet
                 {
                     string responseContent = await responseMessage.Content.ReadAsStringAsync();
                     _logger.LogCritical($"Could not perform cache initialisation: {responseMessage.ReasonPhrase}");
-                    return null;
+                    if (_silentFailure)
+                    {
+                        return null;
+                    }
+                    else
+                    {
+                        throw new HfException(responseMessage);
+                    }
                 }
                 _logger.LogDebug($"Successfully initialised cache with status code {responseMessage.StatusCode}");
                 return await responseMessage.Content.ReadAsStringAsync();

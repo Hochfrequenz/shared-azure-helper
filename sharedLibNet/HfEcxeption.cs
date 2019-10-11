@@ -1,8 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System;
+using System.Net.Http;
 
 namespace sharedLibNet
 {
+    /// <summary>
+    /// Main HF CustomException Class 
+    /// </summary>
     public class HfException : Exception
     {
         public HfException()
@@ -10,28 +14,28 @@ namespace sharedLibNet
         }
 
         public HfException(string message)
-            : base(String.Format("HF: {0}", message))
+            : base(String.Format("HF exception: {0}", message))
         {
         }
 
         public HfException(string message, Exception inner)
-            : base(message, inner)
-        {
-        }
-    }
-    public class HttpException : HfException
-    {
-        public HttpException()
+            : base(String.Format("HF exception: {0}", message), inner)
         {
         }
 
-        public HttpException(HttpResponse response)
-            : base(String.Format("Invalid Http response: statusCode({0}), content: {1}", response.StatusCode, response.Body))
+        /// <summary>
+        /// Http Exception Class that get a HttpResponse Class as argument and make the fault visible by throw a HfException
+        /// </summary>
+        public HfException(HttpResponseMessage response)
+            : base(String.Format("Invalid Http response: statusCode({0}), content: {1}", response.StatusCode, response.Content))
         {
         }
 
-        public HttpException(string message, Exception inner)
-            : base(message, inner)
+        /// <summary>
+        /// Http Exception Class that get a HttpResponse Class as argument and make the fault visible by throw a HfException
+        /// </summary>
+        public HfException(HttpResponseMessage response, Exception inner)
+            : base(String.Format("Invalid Http response: statusCode({0}), content: {1}", response.StatusCode, response.Content), inner)
         {
         }
     }
