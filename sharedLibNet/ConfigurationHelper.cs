@@ -14,7 +14,22 @@ namespace sharedLibNet
     {
         protected HttpClient httpClient = new HttpClient();
         protected ILogger _logger = null;
-        public ConfigurationHelper(ILogger logger)
+        private readonly bool _silentFailure;
+
+        /// <summary>
+        /// todo add docstring here
+        /// </summary>
+        /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
+        public ConfigurationHelper(bool silentFailure = true)
+        {
+            this._silentFailure = silentFailure;
+        }
+        /// <summary>
+        /// todo add docstring here
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
+        public ConfigurationHelper(ILogger logger, bool silentFailure = true):this(silentFailure)
         {
             _logger = logger;
         }
@@ -38,7 +53,14 @@ namespace sharedLibNet
                 _logger.LogCritical($"Could not get configuration: {responseMessage.ReasonPhrase}; returning null");
                 var responseContent = await responseMessage.Content.ReadAsStringAsync();
                 _logger.LogCritical(responseContent);
-                return null;
+                if (_silentFailure)
+                {
+                    return null;
+                }
+                else
+                {
+                    throw new HfException(responseMessage);
+                }
             }
             _logger.LogDebug($"Successfully retrieved POST response with status code {responseMessage}");
             List<Stage> result;
@@ -46,13 +68,23 @@ namespace sharedLibNet
             {
                 result = JsonConvert.DeserializeObject<List<Stage>>(await responseMessage.Content.ReadAsStringAsync());
             }
-            catch (Exception e)
+            catch (Exception e) // todo: no pokemon exceptio nhandling. Probably we'll only need to catch the JsonReaderException
             {
                 _logger.LogError($"Response could not be deserialied: {e}");
                 throw e;
             }
             return result;
         }
+
+        /// <summary>
+        /// Get configuration with token
+        /// </summary>
+        /// <param name="token">token to authenticate</param>
+        /// <param name="client"></param>
+        /// <param name="app"></param>
+        /// <param name="configURL"></param>
+        /// <param name="apiKey">api key for azure</param>
+        /// <returns></returns>
         public async Task<List<Stage>> GetConfigurationWithToken(string token, string client, string app, string configURL,string apiKey)
         {
             dynamic config = new ExpandoObject();
@@ -65,7 +97,14 @@ namespace sharedLibNet
                 _logger.LogCritical($"Could not get configuration: {responseMessage.ReasonPhrase}; returning null");
                 var responseContent = await responseMessage.Content.ReadAsStringAsync();
                 _logger.LogCritical(responseContent);
-                return null;
+                if (_silentFailure)
+                {
+                    return null;
+                }
+                else
+                {
+                    throw new HfException(responseMessage);
+                }
             }
             _logger.LogDebug($"Successfully retrieved POST response with status code {responseMessage}");
             List<Stage> result;

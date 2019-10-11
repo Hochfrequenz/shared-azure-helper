@@ -62,6 +62,7 @@ namespace sharedLibNet
         protected static HttpClient httpClient = new HttpClient();
         protected string _authURL;
         public RestClient authClient = null;
+        protected readonly bool _silentFailure;
 
 
         [Obsolete("Please use the version to specify with an explicit AuthConfiguration", true)]
@@ -83,8 +84,22 @@ namespace sharedLibNet
                 Audiences = config.GetSection("AUDIENCES").Get<string[]>()
             };
         }
-
-        public AuthenticationHelper(string certIssuer, string authURL, AuthConfiguration config)
+        /// <summary>
+        /// todo: insert docstring
+        /// </summary>
+        /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
+        public AuthenticationHelper(bool silentFailure = true)
+        {
+            this._silentFailure = silentFailure;
+        }
+        /// <summary>
+        /// todo: insert docstring
+        /// </summary>
+        /// <param name="certIssuer"></param>
+        /// <param name="authURL"></param>
+        /// <param name="config"></param>
+        /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
+        public AuthenticationHelper(string certIssuer, string authURL, AuthConfiguration config, bool silentFailure = true) :this(silentFailure)
         {
             _authURL = authURL;
             CertIssuer = certIssuer;
@@ -170,7 +185,13 @@ namespace sharedLibNet
 
         }*/
 
-        // todo: docstring
+        /// <summary>
+        /// Check authentication with Http request.
+        /// </summary>
+        /// <param name="req"></param>
+        /// <param name="log"></param>
+        /// <param name="checkForAudience"></param>
+        /// <returns></returns>
         public async Task<AuthResult> Http_CheckAuth(HttpRequest req, ILogger log, string checkForAudience = null)
         {
             using (MiniProfiler.Current.Step("CheckingAuth"))
@@ -237,7 +258,10 @@ namespace sharedLibNet
                             if (CN != CertIssuer)
                             {
                                 log.LogCritical($"Certificate has wrong CN {CN} instead of {CertIssuer}");
-                                return null;
+                                if (_silentFailure)
+                                    return null;
+                                else
+                                    throw new HfException($"Certificate has wrong CN {CN} instead of {CertIssuer}");
                             }
                             using (MiniProfiler.Current.Step("CheckingFingerprint"))
                             {
@@ -256,7 +280,10 @@ namespace sharedLibNet
                                     else
                                     {
                                         log.LogCritical("Cert is not allowed. Reject; returning null");
-                                        return null;
+                                        if (_silentFailure)
+                                            return null;
+                                        else
+                                            throw new HfException("Cert is not allowed. Reject; returning null");
                                     }
                                 }
                             }
@@ -264,7 +291,10 @@ namespace sharedLibNet
                         catch (Exception e)
                         {
                             log.LogCritical($"Could not parse Certificate: certString = {certString}: Exception = {e}; returning null");
-                            return null;
+                            if (_silentFailure)
+                                return null;
+                            else
+                                throw new HfException(e.Message);
                         }
                     }
                     else
@@ -293,17 +323,26 @@ namespace sharedLibNet
                         {
                             log.LogWarning($"Catched ArgumentException in ValidateTokenAsync. Probably due to malformed token: {ae.Message}. Returning null!");
                             log.LogDebug($"The stacktrace of the ArgumentException is: {ae.StackTrace}");
-                            return null;
+                            if (_silentFailure)
+                                return null;
+                            else
+                                throw new HfException($"Catched ArgumentException in ValidateTokenAsync. Probably due to malformed token: {ae.Message}. Returning null!");
                         }
                     }
                     //if we get here we haven't found a valid header
                     log.LogCritical($"No valid token found");
-                    return null;
+                    return null;        
                 }
             }
         }
 
-        // todo: docstring
+        /// <summary>
+        /// Authenticate with Cert
+        /// </summary>
+        /// <param name="target"></param>
+        /// <param name="overriding"></param>
+        /// <param name="log"></param>
+        /// <returns></returns>
         public async Task<string> AuthenticateWithCert(string target, bool overriding = false, ILogger log = null)
         {
             if (!overriding && _certStrings.ContainsKey(target))
@@ -324,7 +363,7 @@ namespace sharedLibNet
                 await Configure(log);
                 if (_accessToken == null)
                 {
-                    throw new Exception($"Could not retrieve auth token. Are {AppConfigurationKey.CLIENT_ID},  {AppConfigurationKey.CLIENT_SECRET} and {AppConfigurationKey.NEW_AUDIENCE} set?");
+                    throw new HfException($"Could not retrieve auth token. Are {AppConfigurationKey.CLIENT_ID},  {AppConfigurationKey.CLIENT_SECRET} and {AppConfigurationKey.NEW_AUDIENCE} set?");
                 }
             }
 
@@ -352,7 +391,7 @@ namespace sharedLibNet
                 {
                     log.LogCritical(errorMessage);
                 }
-                throw new Exception(errorMessage);
+                throw new HfException(errorMessage); 
             }
             if (!_certStrings.ContainsKey(target))
             {
@@ -365,7 +404,11 @@ namespace sharedLibNet
             return response.Content;
         }
 
-        // todo: docstring
+        /// <summary>
+        /// Authenticate with token
+        /// </summary>
+        /// <param name="log"></param>
+        /// <returns></returns>
         public async Task<string> AuthenticateWithToken(ILogger log = null)
         {
             try
