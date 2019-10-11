@@ -85,7 +85,7 @@ namespace sharedLibNet
             };
         }
         /// <summary>
-        /// 
+        /// @Hamid: insert docstring
         /// </summary>
         /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
         public AuthenticationHelper(bool silentFailure = true)
@@ -93,7 +93,7 @@ namespace sharedLibNet
             this._silentFailure = silentFailure;
         }
         /// <summary>
-        /// 
+        /// @hamid insert docstring
         /// </summary>
         /// <param name="certIssuer"></param>
         /// <param name="authURL"></param>
@@ -288,16 +288,21 @@ namespace sharedLibNet
                             if (_silentFailure)
                                 return null;
                             else
+                                //@hamid at this point, you'll get nested HfExcpetions. maybe you can unpack them in the HfException constructor? 
                                 throw new HfException(e.Message);
                         }
                     }
                     else
                     {
                         log.LogCritical($"Client Cert header not given; returning null");
+                        return null;
+                        // @Hamid: we don't need the exception here. this is not an error branch but something is simply not provided. It's not lazy error handling but a valid response.
+                        /*
                         if (_silentFailure)
                             return null;
                         else
                             throw new HfException($"Client Cert header not given; returning null");
+                        */
                     }
                 }
                 else
@@ -328,10 +333,13 @@ namespace sharedLibNet
                     }
                     //if we get here we haven't found a valid header
                     log.LogCritical($"No valid token found");
-                    if (_silentFailure)
+                    return null;
+                    // @Hamid: we don't need the exception here. this is not an error branch but something is simply not provided. It's not lazy error handling but a valid response.
+                    /*if (_silentFailure)
                         return null;
                     else
                         throw new HfException($"No valid token found");
+                    */            
                 }
             }
         }
@@ -357,6 +365,7 @@ namespace sharedLibNet
                 await Configure(log);
                 if (_accessToken == null)
                 {
+                    // @hamid: replace this with hf exception. one should never throw raw 'Exception's.
                     throw new Exception($"Could not retrieve auth token. Are {AppConfigurationKey.CLIENT_ID},  {AppConfigurationKey.CLIENT_SECRET} and {AppConfigurationKey.NEW_AUDIENCE} set?");
                 }
             }
@@ -385,7 +394,7 @@ namespace sharedLibNet
                 {
                     log.LogCritical(errorMessage);
                 }
-                throw new Exception(errorMessage);
+                throw new Exception(errorMessage); // @hamid: replace this with hf exception. one should never throw raw 'Exception's.
             }
             if (!_certStrings.ContainsKey(target))
             {
