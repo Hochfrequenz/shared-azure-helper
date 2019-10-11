@@ -17,7 +17,7 @@ namespace sharedLibNet
         private readonly bool _silentFailure;
 
         /// <summary>
-        /// @hamid add docstring here
+        /// todo add docstring here
         /// </summary>
         /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
         public ConfigurationHelper(bool silentFailure = true)
@@ -25,7 +25,7 @@ namespace sharedLibNet
             this._silentFailure = silentFailure;
         }
         /// <summary>
-        /// qhamid add docstring here
+        /// todo add docstring here
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
@@ -76,7 +76,15 @@ namespace sharedLibNet
             return result;
         }
 
-        // todo: docstring
+        /// <summary>
+        /// Get configuration with token
+        /// </summary>
+        /// <param name="token">token to authenticate</param>
+        /// <param name="client"></param>
+        /// <param name="app"></param>
+        /// <param name="configURL"></param>
+        /// <param name="apiKey">api key for azure</param>
+        /// <returns></returns>
         public async Task<List<Stage>> GetConfigurationWithToken(string token, string client, string app, string configURL,string apiKey)
         {
             dynamic config = new ExpandoObject();

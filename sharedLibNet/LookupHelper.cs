@@ -59,7 +59,17 @@ namespace sharedLibNet
             }
         }
 
-        // todo @hamid docstring including <exception> tag.
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="urls"></param>
+        /// <param name="lookupURL"></param>
+        /// <param name="clientCertString"></param>
+        /// <param name="apiKey"></param>
+        /// <param name="backendId"></param>
+        /// <returns></returns>
+        /// <exception cref="HfException" >if Could not perform lookup and silentFailure is false</exception>
+
         public async Task<GenericLookupResult> RetrieveURLs(IList<Bo4eUri> urls, Uri lookupURL, string clientCertString, string apiKey, BOBackendId backendId)
         {
             if (string.IsNullOrWhiteSpace(clientCertString))
@@ -158,7 +168,16 @@ namespace sharedLibNet
             return new Tuple<bool, HttpStatusCode>(response.IsSuccessStatusCode, response.StatusCode);
         }
 
-        // todo @hamid docstring inlcuding exception tag
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="urls"></param>
+        /// <param name="lookupURL"></param>
+        /// <param name="token"></param>
+        /// <param name="apiKey"></param>
+        /// <param name="backendId"></param>
+        /// <returns>todo: insert docstring</returns>
+        /// <exception cref="HfException" >if Could not perform lookup and silentFailure is false</exception>
         public async Task<GenericLookupResult> RetrieveURLsWithUserToken(IList<Bo4eUri> urls, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
         {
             RemoveAndReAddHeaders(token, apiKey, backendId);
@@ -186,7 +205,18 @@ namespace sharedLibNet
             return resultObject;
         }
 
-        // todo: docstring
+        /// <summary>
+        /// Fetching the list of BusinessObjects as a suggested list in base of <paramref name="suggestion"/> string.
+        /// </summary>
+        /// <param name="suggestion"></param>
+        /// <param name="boe4Type"></param>
+        /// <param name="lookupURL"></param>
+        /// <param name="token"></param>
+        /// <param name="apiKey"></param>
+        /// <param name="backendId"></param>
+        /// <returns>Returns a listof suggested BusinessObject</returns>
+        /// <exception cref="HfException" >if Could not perform lookup and silentFailure is false</exception>
+
         public async Task<List<BusinessObject>> Suggest(string suggestion, string boe4Type, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
         {
             RemoveAndReAddHeaders(token, apiKey, backendId);
