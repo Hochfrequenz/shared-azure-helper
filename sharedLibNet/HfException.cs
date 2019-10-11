@@ -13,13 +13,15 @@ namespace sharedLibNet
         {
         }
 
+        // todo: docstring
         public HfException(string message)
-            : base(String.Format("HF exception: {0}", message))
+            : base($"{nameof(HfException)}: {message}")
         {
         }
 
+        // todo: docstring
         public HfException(string message, Exception inner)
-            : base(String.Format("HF exception: {0}", message), inner)
+            : base($"{nameof(HfException)}: {message}", inner)
         {
         }
 
@@ -27,7 +29,7 @@ namespace sharedLibNet
         /// Http Exception Class that get a HttpResponse Class as argument and make the fault visible by throw a HfException
         /// </summary>
         public HfException(HttpResponseMessage response)
-            : base(String.Format("Invalid Http response: statusCode({0}), content: {1}", response.StatusCode, response.Content))
+            : base($"Invalid Http response: statusCode({response.StatusCode}), content: {response.Content}")
         {
         }
 
@@ -35,7 +37,7 @@ namespace sharedLibNet
         /// Http Exception Class that get a HttpResponse Class as argument and make the fault visible by throw a HfException
         /// </summary>
         public HfException(HttpResponseMessage response, Exception inner)
-            : base(String.Format("Invalid Http response: statusCode({0}), content: {1}", response.StatusCode, response.Content), inner)
+            : base($"Invalid Http response: statusCode({response.StatusCode}), content: {inner}")
         {
         }
     }
