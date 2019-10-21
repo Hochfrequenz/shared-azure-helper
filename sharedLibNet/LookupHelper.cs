@@ -214,10 +214,10 @@ namespace sharedLibNet
         /// <param name="token"></param>
         /// <param name="apiKey"></param>
         /// <param name="backendId"></param>
+        /// <param name="anonymizedResultsOnly"></param>
         /// <returns>Returns a listof suggested BusinessObject</returns>
         /// <exception cref="HfException" >if Could not perform lookup and silentFailure is false</exception>
-
-        public async Task<List<BusinessObject>> Suggest(string suggestion, string boe4Type, Uri lookupURL, string token, string apiKey, BOBackendId backendId, bool anonymizedResultsOnly =false)
+        public async Task<List<BusinessObject>> Suggest(string suggestion, string boe4Type, Uri lookupURL, string token, string apiKey, BOBackendId backendId, bool anonymizedResultsOnly = false)
         {
             RemoveAndReAddHeaders(token, apiKey, backendId);
             httpClient.DefaultRequestHeaders.Add("x-anonymized-results-only", anonymizedResultsOnly.ToString());
