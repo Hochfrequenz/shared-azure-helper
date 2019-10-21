@@ -4,7 +4,7 @@ This repository is used to build the nuget package [Hochfrequenz.sharedAzureHelp
 
 ## Purpose
 ### LookupHelper 
-The LookupHelper is a **wrapper** around the lookupService (see [Hochfrequenz/energy-service-hub/lookupService](https://github.com/Hochfrequenz/energy-service-hub/tree/master/lookupService). It's main purpose is to spare programmers of other projects to directly deal with manually instantiate http clients, setting header values, query parameters and so on to access the lookup service.
+The LookupHelper is a **wrapper** around the lookupService (see [Hochfrequenz/energy-service-hub/lookupService](https://github.com/Hochfrequenz/energy-service-hub/tree/master/lookupService)). It's main purpose is to spare programmers of other projects to directly deal with manually instantiate http clients, setting header values, query parameters and so on to access the lookup service.
 
 ### AuthenticationHelper
 The AuthenticationHelper is a central component used to check if http requests are authenticated using a [JWT](https://en.wikipedia.org/wiki/JSON_Web_Token) that is stored in a HTTP header of the request.
