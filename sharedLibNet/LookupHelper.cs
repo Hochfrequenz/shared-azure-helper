@@ -220,7 +220,7 @@ namespace sharedLibNet
         public async Task<List<BusinessObject>> Suggest(string suggestion, string boe4Type, Uri lookupURL, string token, string apiKey, BOBackendId backendId, bool anonymizedResultsOnly = false)
         {
             RemoveAndReAddHeaders(token, apiKey, backendId);
-            httpClient.DefaultRequestHeaders.Add("x-anonymized-results-only", anonymizedResultsOnly.ToString());
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.ANONYMIZED_RESULTS_ONLY, anonymizedResultsOnly.ToString());
             var responseMessage = await httpClient.GetAsync($"{lookupURL}/suggestion/{boe4Type}/{suggestion}");
             string responseContent = await responseMessage.Content.ReadAsStringAsync();
             if (!responseMessage.IsSuccessStatusCode)
