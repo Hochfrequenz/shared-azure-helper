@@ -308,7 +308,7 @@ namespace sharedLibNet
                     AuthResult principal;
                     foreach (var header in authHeader)
                     {
-                        log.LogDebug($"Trying to authenticate with header {header.Parameter}");
+                        log.LogDebug($"Trying to authenticate with header");// {header.Parameter}");
                         try
                         {
                             if ((principal = await ValidateTokenAsync(header.Parameter, log, checkForAudience)) == null)
