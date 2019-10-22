@@ -214,14 +214,22 @@ namespace sharedLibNet
         /// <param name="token"></param>
         /// <param name="apiKey"></param>
         /// <param name="backendId"></param>
+        /// <param name="anonymizedResultsOnly"></param>
         /// <returns>Returns a listof suggested BusinessObject</returns>
         /// <exception cref="HfException" >if Could not perform lookup and silentFailure is false</exception>
-
-        public async Task<List<BusinessObject>> Suggest(string suggestion, string boe4Type, Uri lookupURL, string token, string apiKey, BOBackendId backendId, bool anonymizedResultsOnly =false)
+        public async Task<List<BusinessObject>> Suggest(string suggestion, string boe4Type, Uri lookupURL, string token, string apiKey, BOBackendId backendId, bool anonymizedResultsOnly = false)
         {
             RemoveAndReAddHeaders(token, apiKey, backendId);
-            httpClient.DefaultRequestHeaders.Add("x-anonymized-results-only", anonymizedResultsOnly.ToString());
-            var responseMessage = await httpClient.GetAsync($"{lookupURL}/suggestion/{boe4Type}/{suggestion}");
+            // check if header is already set
+            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.ANONYMIZED_RESULTS_ONLY))
+            {
+                _logger.LogDebug($"Removing {HeaderNames.ANONYMIZED_RESULTS_ONLY} header");
+                httpClient.DefaultRequestHeaders.Remove(HeaderNames.ANONYMIZED_RESULTS_ONLY);
+            }
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.ANONYMIZED_RESULTS_ONLY, anonymizedResultsOnly.ToString());
+            var uri = new Uri($"{lookupURL}/suggestion/{boe4Type}/{suggestion}");
+            _logger.LogDebug($"Suggestion URL is {uri}");
+            var responseMessage = await httpClient.GetAsync(uri);
             string responseContent = await responseMessage.Content.ReadAsStringAsync();
             if (!responseMessage.IsSuccessStatusCode)
             {
