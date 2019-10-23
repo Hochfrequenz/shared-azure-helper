@@ -10,7 +10,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using EshDataExchangeFormats;
-using EshDataExchangeFormats.lookup;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -99,7 +98,7 @@ namespace sharedLibNet
         /// <param name="authURL"></param>
         /// <param name="config"></param>
         /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
-        public AuthenticationHelper(string certIssuer, string authURL, AuthConfiguration config, bool silentFailure = true) :this(silentFailure)
+        public AuthenticationHelper(string certIssuer, string authURL, AuthConfiguration config, bool silentFailure = true) : this(silentFailure)
         {
             _authURL = authURL;
             CertIssuer = certIssuer;
@@ -156,17 +155,23 @@ namespace sharedLibNet
 
         protected async Task GetFingerprints(ILogger log)
         {
+            Uri fingerPrintUrl = new Uri(_authURL + "/fingerprints");
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Get,
+                RequestUri = fingerPrintUrl
+            };
             dynamic config = new ExpandoObject();
             if (_config.ApiKey != null)
             {
                 log.LogDebug($"Adding {HeaderNames.Azure.SUBSCRIPTION_KEY} from app configuration");
-                httpClient.DefaultRequestHeaders.Add(HeaderNames.Azure.SUBSCRIPTION_KEY, _config.ApiKey);
+                request.Headers.Add(HeaderNames.Azure.SUBSCRIPTION_KEY, _config.ApiKey);
             }
-            Uri fingerPrintUrl = new Uri(_authURL + "/fingerprints");
+
             HttpResponseMessage responseMessage;
             using (MiniProfiler.Current.Step("Awaiting fingerprints"))
             {
-                responseMessage = await httpClient.GetAsync(fingerPrintUrl);
+                responseMessage = await httpClient.SendAsync(request);
             }
             if (!responseMessage.IsSuccessStatusCode)
             {
@@ -331,7 +336,7 @@ namespace sharedLibNet
                     }
                     //if we get here we haven't found a valid header
                     log.LogCritical($"No valid token found");
-                    return null;        
+                    return null;
                 }
             }
         }
@@ -391,7 +396,7 @@ namespace sharedLibNet
                 {
                     log.LogCritical(errorMessage);
                 }
-                throw new HfException(errorMessage); 
+                throw new HfException(errorMessage);
             }
             if (!_certStrings.ContainsKey(target))
             {
