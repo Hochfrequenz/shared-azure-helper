@@ -286,6 +286,8 @@ namespace sharedLibNet
         /// <param name="apiKey">API key for gateway</param>
         /// <param name="backendId">ID of Backend</param>
         /// <returns></returns>
+        ///<exception cref="HfException" >if Could not perform lookup and silentFailure is false</exception>
+
         public async Task<string> LookupJsonWithUserToken(string json, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
         {
             _logger.LogDebug("LookupJsonWithUserToken");
@@ -317,6 +319,7 @@ namespace sharedLibNet
         /// <param name="apiKey">api key for azure</param>
         /// <param name="bobId">unique ID of the backend</param>
         /// <returns>raw lookup response as string in case of success, null in case of failure</returns>
+        /// <exception cref="HfException" >if Could not perform lookup and silentFailure is false</exception>
         public async Task<string> InitialiseSuggestionCache(GenericCachingQuery initialisationQuery, Uri cacheUrl, string token, string apiKey, string encryptionKey, BOBackendId bobId)
         {
             using (MiniProfiler.Current.Step($"{nameof(InitialiseSuggestionCache)} ({nameof(LookupHelper)})"))

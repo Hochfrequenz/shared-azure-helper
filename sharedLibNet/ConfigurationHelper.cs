@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Net.Http;
 using System.Threading.Tasks;
-using EshDataExchangeFormats;
+using EshDataExchangeFormats;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using sharedLibNet.Model;
@@ -13,9 +13,8 @@ namespace sharedLibNet
     public class ConfigurationHelper
     {
         protected HttpClient httpClient = new HttpClient();
-        protected ILogger _logger = null;
-        private readonly bool _silentFailure;
-
+        protected ILogger _logger = null;
+        private readonly bool _silentFailure;
         /// <summary>
         /// todo add docstring here
         /// </summary>
@@ -53,13 +52,13 @@ namespace sharedLibNet
                 _logger.LogCritical($"Could not get configuration: {responseMessage.ReasonPhrase}; returning null");
                 var responseContent = await responseMessage.Content.ReadAsStringAsync();
                 _logger.LogCritical(responseContent);
-                if (_silentFailure)
+                if (_silentFailure)
                 {
-                    return null;
-                }
-                else
-                {
-                    throw new HfException(responseMessage);
+                    return null;
+                }
+                else
+                {
+                    throw new HfException(responseMessage);
                 }
             }
             _logger.LogDebug($"Successfully retrieved POST response with status code {responseMessage}");
@@ -76,14 +75,14 @@ namespace sharedLibNet
             return result;
         }
 
-        /// <summary>
-        /// Get configuration with token
-        /// </summary>
-        /// <param name="token">token to authenticate</param>
-        /// <param name="client"></param>
-        /// <param name="app"></param>
-        /// <param name="configURL"></param>
-        /// <param name="apiKey">api key for azure</param>
+        /// <summary>
+        /// Get configuration with token
+        /// </summary>
+        /// <param name="token">token to authenticate</param>
+        /// <param name="client"></param>
+        /// <param name="app"></param>
+        /// <param name="configURL"></param>
+        /// <param name="apiKey">api key for azure</param>
         /// <returns></returns>
         public async Task<List<Stage>> GetConfigurationWithToken(string token, string client, string app, string configURL,string apiKey)
         {
@@ -97,13 +96,13 @@ namespace sharedLibNet
                 _logger.LogCritical($"Could not get configuration: {responseMessage.ReasonPhrase}; returning null");
                 var responseContent = await responseMessage.Content.ReadAsStringAsync();
                 _logger.LogCritical(responseContent);
-                if (_silentFailure)
+                if (_silentFailure)
                 {
-                    return null;
-                }
-                else
-                {
-                    throw new HfException(responseMessage);
+                    return null;
+                }
+                else
+                {
+                    throw new HfException(responseMessage);
                 }
             }
             _logger.LogDebug($"Successfully retrieved POST response with status code {responseMessage}");
@@ -119,15 +118,15 @@ namespace sharedLibNet
             }
             return result;
         }
-        private HttpClient RemoveAndReAddHeaders(string token, string apiKey)
-        {
-            _logger.LogDebug("RemoveAndReAddHeaders");
+        private HttpClient RemoveAndReAddHeaders(string token, string apiKey)
+        {
+            _logger.LogDebug("RemoveAndReAddHeaders");
             if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.Authorization))
             {
                 _logger.LogDebug($"Removing {HeaderNames.Auth.Authorization} header");
                 httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.Authorization);
-            }
-            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.Authorization, "Bearer " + token);
+            }
+            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.Authorization, "Bearer " + token);
             if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.HfAuthorization))
             {
                 _logger.LogDebug($"Removing {HeaderNames.Auth.HfAuthorization} header");
@@ -148,10 +147,10 @@ namespace sharedLibNet
             {
                 _logger.LogDebug($"Removing {HeaderNames.BACKEND_ID} header");
                 httpClient.DefaultRequestHeaders.Remove(HeaderNames.BACKEND_ID);
-            }
-            
-            _logger.LogDebug("Removed and readded headers.");
-            return httpClient;
+            }
+            
+            _logger.LogDebug("Removed and readded headers.");
+            return httpClient;
         }
     }
 }
