@@ -80,42 +80,47 @@ namespace sharedLibNet
             {
                 _logger.LogCritical($"{nameof(lookupURL)} is null!");
             }
-            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.XArrClientCert))
-            {
-                _logger.LogDebug($"Removing header '{HeaderNames.Auth.XArrClientCert}'");
-                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.XArrClientCert);
-            }
 
-            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.XArrClientCert, clientCertString);
-            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Azure.SUBSCRIPTION_KEY))
-            {
-                _logger.LogDebug($"Removing header '{HeaderNames.Azure.SUBSCRIPTION_KEY}'");
-                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Azure.SUBSCRIPTION_KEY);
-            }
-            if (!string.IsNullOrEmpty(apiKey))
-            {
-                _logger.LogDebug($"Adding {HeaderNames.Azure.SUBSCRIPTION_KEY} header");
-                httpClient.DefaultRequestHeaders.Add(HeaderNames.Azure.SUBSCRIPTION_KEY, apiKey);
-            }
-            else
-            {
-                _logger.LogWarning($"{nameof(apiKey)} is initial: '{apiKey}'");
-            }
-            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.BACKEND_ID))
-            {
-                _logger.LogDebug($"Removing {HeaderNames.BACKEND_ID} header");
-                httpClient.DefaultRequestHeaders.Remove(HeaderNames.BACKEND_ID);
-            }
-            //if (!string.IsNullOrEmpty(backendId))
-            //{
-            httpClient.DefaultRequestHeaders.Add(HeaderNames.BACKEND_ID, backendId.ToString());
-            //}
             GenericLookupQuery urlObject = new GenericLookupQuery()
             {
                 uris = urls
             };
             string requestBody = JsonConvert.SerializeObject(urlObject, new StringEnumConverter());
-            var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(requestBody, System.Text.UTF8Encoding.UTF8, MIME_TYPE_JSON));
+            var request = new HttpRequestMessage()
+            {
+                Content = new StringContent(requestBody, System.Text.UTF8Encoding.UTF8, MIME_TYPE_JSON),
+                RequestUri = lookupURL,
+                Method = HttpMethod.Post
+            };
+            if (request.Headers.Contains(HeaderNames.Auth.XArrClientCert))
+            {
+                _logger.LogDebug($"Removing header '{HeaderNames.Auth.XArrClientCert}'");
+                request.Headers.Remove(HeaderNames.Auth.XArrClientCert);
+            }
+
+            request.Headers.Add(HeaderNames.Auth.XArrClientCert, clientCertString);
+            if (request.Headers.Contains(HeaderNames.Azure.SUBSCRIPTION_KEY))
+            {
+                _logger.LogDebug($"Removing header '{HeaderNames.Azure.SUBSCRIPTION_KEY}'");
+                request.Headers.Remove(HeaderNames.Azure.SUBSCRIPTION_KEY);
+            }
+            if (!string.IsNullOrEmpty(apiKey))
+            {
+                _logger.LogDebug($"Adding {HeaderNames.Azure.SUBSCRIPTION_KEY} header");
+                request.Headers.Add(HeaderNames.Azure.SUBSCRIPTION_KEY, apiKey);
+            }
+            else
+            {
+                _logger.LogWarning($"{nameof(apiKey)} is initial: '{apiKey}'");
+            }
+            if (request.Headers.Contains(HeaderNames.BACKEND_ID))
+            {
+                _logger.LogDebug($"Removing {HeaderNames.BACKEND_ID} header");
+                request.Headers.Remove(HeaderNames.BACKEND_ID);
+            }
+            request.Headers.Add(HeaderNames.BACKEND_ID, backendId.ToString());
+
+            var responseMessage = await httpClient.SendAsync(request);
             if (!responseMessage.IsSuccessStatusCode)
             {
                 string responseContentPost = await responseMessage.Content.ReadAsStringAsync();
@@ -152,17 +157,26 @@ namespace sharedLibNet
             {
                 throw new ArgumentNullException(nameof(bobId), "Backend ID must not be null.");
             }
-            RemoveAndReAddHeaders(token, apiKey, bobId);
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Head,
+                RequestUri = lookupBaseUrl
+            };
+            AddHeaders(ref request, token, apiKey, bobId);
             HttpResponseMessage response;
             try
             {
-                response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Head, lookupBaseUrl));
+                response = await httpClient.SendAsync(request);
             }
             catch (Exception e)
             {
                 _logger.LogError($"Request (try login) failed. {nameof(lookupBaseUrl)}: '{lookupBaseUrl}', {nameof(token)}: '{token}', {nameof(bobId)}: '{bobId}'; Exception: {e}.");
                 _logger.LogInformation($"Returning negative result with status code {HttpStatusCode.BadGateway} / 502");
                 return new Tuple<bool, HttpStatusCode>(false, HttpStatusCode.BadGateway);
+            }
+            finally
+            {
+                request.Dispose();
             }
             _logger.LogDebug($"Response has status code {response.StatusCode}. See lookup service logs for details.");
             return new Tuple<bool, HttpStatusCode>(response.IsSuccessStatusCode, response.StatusCode);
@@ -180,13 +194,18 @@ namespace sharedLibNet
         /// <exception cref="HfException" >if Could not perform lookup and silentFailure is false</exception>
         public async Task<GenericLookupResult> RetrieveURLsWithUserToken(IList<Bo4eUri> urls, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
         {
-            RemoveAndReAddHeaders(token, apiKey, backendId);
             GenericLookupQuery urlObject = new GenericLookupQuery()
             {
                 uris = urls
             };
             string requestBody = JsonConvert.SerializeObject(urlObject);
-            var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(requestBody, System.Text.UTF8Encoding.UTF8, MIME_TYPE_JSON));
+            var request = new HttpRequestMessage()
+            {
+                Content = new StringContent(requestBody, System.Text.UTF8Encoding.UTF8, MIME_TYPE_JSON),
+                Method = HttpMethod.Post,
+                RequestUri = lookupURL
+            };
+            var responseMessage = await httpClient.SendAsync(request);
             string responseContent = await responseMessage.Content.ReadAsStringAsync();
             if (!responseMessage.IsSuccessStatusCode)
             {
@@ -214,14 +233,26 @@ namespace sharedLibNet
         /// <param name="token"></param>
         /// <param name="apiKey"></param>
         /// <param name="backendId"></param>
+        /// <param name="anonymizedResultsOnly"></param>
         /// <returns>Returns a listof suggested BusinessObject</returns>
         /// <exception cref="HfException" >if Could not perform lookup and silentFailure is false</exception>
-
-        public async Task<List<BusinessObject>> Suggest(string suggestion, string boe4Type, Uri lookupURL, string token, string apiKey, BOBackendId backendId, bool anonymizedResultsOnly)
+        public async Task<List<BusinessObject>> Suggest(string suggestion, string boe4Type, Uri lookupURL, string token, string apiKey, BOBackendId backendId, bool anonymizedResultsOnly = false)
         {
-            RemoveAndReAddHeaders(token, apiKey, backendId);
-            httpClient.DefaultRequestHeaders.Add("x-anonymized-results-only", anonymizedResultsOnly.ToString());
-            var responseMessage = await httpClient.GetAsync($"{lookupURL}/suggestion/{boe4Type}/{suggestion}");
+            var uri = new Uri($"{lookupURL}/suggestion/{boe4Type}/{suggestion}");
+            _logger.LogDebug($"Suggestion URL is {uri}");
+            HttpRequestMessage request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Get,
+                RequestUri = uri
+            };
+            AddHeaders(ref request, token, apiKey, backendId);
+            if (request.Headers.Contains(HeaderNames.ANONYMIZED_RESULTS_ONLY))
+            {
+                _logger.LogDebug($"Removing {HeaderNames.ANONYMIZED_RESULTS_ONLY} header");
+                request.Headers.Remove(HeaderNames.ANONYMIZED_RESULTS_ONLY);
+            }
+            request.Headers.Add(HeaderNames.ANONYMIZED_RESULTS_ONLY, anonymizedResultsOnly.ToString());
+            var responseMessage = await httpClient.SendAsync(request);
             string responseContent = await responseMessage.Content.ReadAsStringAsync();
             if (!responseMessage.IsSuccessStatusCode)
             {
@@ -290,24 +321,32 @@ namespace sharedLibNet
 
         public async Task<string> LookupJsonWithUserToken(string json, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
         {
-            _logger.LogDebug("LookupJsonWithUserToken");
-            RemoveAndReAddHeaders(token, apiKey, backendId);
-            var responseMessage = await httpClient.PostAsync(lookupURL, new StringContent(json, System.Text.UTF8Encoding.UTF8, "application/json"));
-            if (!responseMessage.IsSuccessStatusCode)
+            using (MiniProfiler.Current.Step(nameof(LookupJsonWithUserToken)))
             {
-                string responseContent = await responseMessage.Content.ReadAsStringAsync();
-                _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase} / {responseContent}; The original request was: {json} POSTed to {lookupURL}");
-                if (_silentFailure)
+                HttpRequestMessage request = new HttpRequestMessage()
                 {
-                    return null;
-                }
-                else
+                    Content = new StringContent(json, System.Text.UTF8Encoding.UTF8, MIME_TYPE_JSON),
+                    Method = HttpMethod.Post,
+                    RequestUri = lookupURL
+                };
+                AddHeaders(ref request, token, apiKey, backendId);
+                var responseMessage = await httpClient.SendAsync(request);
+                if (!responseMessage.IsSuccessStatusCode)
                 {
-                    throw new HfException(responseMessage);
+                    string responseContent = await responseMessage.Content.ReadAsStringAsync();
+                    _logger.LogCritical($"Could not perform lookup: {responseMessage.ReasonPhrase} / {responseContent}; The original request was: {json} POSTed to {lookupURL}");
+                    if (_silentFailure)
+                    {
+                        return null;
+                    }
+                    else
+                    {
+                        throw new HfException(responseMessage); // todo @hamid put the full object in the exception
+                    }
                 }
+                _logger.LogDebug($"Successfully retrieved response with status code {responseMessage.StatusCode}");
+                return await responseMessage.Content.ReadAsStringAsync();
             }
-            _logger.LogDebug($"Successfully retrieved response with status code {responseMessage.StatusCode}");
-            return await responseMessage.Content.ReadAsStringAsync();
         }
 
         /// <summary>
@@ -324,10 +363,16 @@ namespace sharedLibNet
         {
             using (MiniProfiler.Current.Step($"{nameof(InitialiseSuggestionCache)} ({nameof(LookupHelper)})"))
             {
-                RemoveAndReAddHeaders(token, apiKey, bobId);
                 string serialisedQuery = JsonConvert.SerializeObject(initialisationQuery, new StringEnumConverter());
-                httpClient.DefaultRequestHeaders.Add(HeaderNames.CacheService.ENCRYPTION_KEY_SHARED_SECRET, encryptionKey);
-                var responseMessage = await httpClient.PutAsync(cacheUrl, new StringContent(serialisedQuery, System.Text.Encoding.UTF8, MIME_TYPE_JSON));
+                HttpRequestMessage request = new HttpRequestMessage()
+                {
+                    Content = new StringContent(serialisedQuery, System.Text.Encoding.UTF8, MIME_TYPE_JSON),
+                    Method = HttpMethod.Put,
+                    RequestUri = cacheUrl
+                };
+                AddHeaders(ref request, token, apiKey, bobId);
+                request.Headers.Add(HeaderNames.CacheService.ENCRYPTION_KEY_SHARED_SECRET, encryptionKey);
+                var responseMessage = await httpClient.SendAsync(request);
                 if (!responseMessage.IsSuccessStatusCode)
                 {
                     string responseContent = await responseMessage.Content.ReadAsStringAsync();
@@ -345,44 +390,46 @@ namespace sharedLibNet
                 return await responseMessage.Content.ReadAsStringAsync();
             }
         }
-
-        private HttpClient RemoveAndReAddHeaders(string token, string apiKey, BOBackendId backendId)
+        /// <summary>
+        /// set requests headers and removes them prior to adding if they're already present.
+        /// </summary>
+        /// <param name="request">request that is modified (pass by ref)</param>
+        /// <param name="token">access token</param>
+        /// <param name="apiKey">subscription key for azure</param>
+        /// <param name="backendId">ID of the backend</param>
+        /// <returns></returns>
+        protected void AddHeaders(ref HttpRequestMessage request, string token, string apiKey, BOBackendId backendId)
         {
-            _logger.LogDebug("RemoveAndReAddHeaders");
-            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.Authorization))
+            _logger.LogDebug(nameof(AddHeaders));
+            if (request.Headers.Contains(HeaderNames.Auth.Authorization))
             {
-                _logger.LogDebug($"Removing {HeaderNames.Auth.Authorization} header");
-                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.Authorization);
+                _logger.LogDebug($"Removing header '{HeaderNames.Auth.Authorization}'");
+                request.Headers.Remove(HeaderNames.Auth.Authorization);
             }
-            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.Authorization, "Bearer " + token);
-            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Auth.HfAuthorization))
+            request.Headers.Add(HeaderNames.Auth.Authorization, "Bearer " + token);
+            if (request.Headers.Contains(HeaderNames.Auth.HfAuthorization))
             {
-                _logger.LogDebug($"Removing {HeaderNames.Auth.HfAuthorization} header");
-                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Auth.HfAuthorization);
+                _logger.LogDebug($"Removing header '{HeaderNames.Auth.HfAuthorization}'");
+                request.Headers.Remove(HeaderNames.Auth.HfAuthorization);
             }
-            httpClient.DefaultRequestHeaders.Add(HeaderNames.Auth.HfAuthorization, "Bearer " + token);
-            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.Azure.SUBSCRIPTION_KEY))
+            request.Headers.Add(HeaderNames.Auth.HfAuthorization, "Bearer " + token);
+            if (request.Headers.Contains(HeaderNames.Azure.SUBSCRIPTION_KEY))
             {
-                _logger.LogDebug($"Removing {HeaderNames.Azure.SUBSCRIPTION_KEY} header");
-                httpClient.DefaultRequestHeaders.Remove(HeaderNames.Azure.SUBSCRIPTION_KEY);
+                _logger.LogDebug($"Removing header '{HeaderNames.Azure.SUBSCRIPTION_KEY}'");
+                request.Headers.Remove(HeaderNames.Azure.SUBSCRIPTION_KEY);
             }
             if (!string.IsNullOrEmpty(apiKey))
             {
-                _logger.LogDebug($"Adding {HeaderNames.Azure.SUBSCRIPTION_KEY} header");
-                httpClient.DefaultRequestHeaders.Add(HeaderNames.Azure.SUBSCRIPTION_KEY, apiKey);
+                _logger.LogDebug($"Adding header '{HeaderNames.Azure.SUBSCRIPTION_KEY}'");
+                request.Headers.Add(HeaderNames.Azure.SUBSCRIPTION_KEY, apiKey);
             }
-            if (httpClient.DefaultRequestHeaders.Contains(HeaderNames.BACKEND_ID))
+            if (request.Headers.Contains(HeaderNames.BACKEND_ID))
             {
-                _logger.LogDebug($"Removing {HeaderNames.BACKEND_ID} header");
-                httpClient.DefaultRequestHeaders.Remove(HeaderNames.BACKEND_ID);
+                _logger.LogDebug($"Removing header '{HeaderNames.BACKEND_ID}'");
+                request.Headers.Remove(HeaderNames.BACKEND_ID);
             }
-            //if (!string.IsNullOrEmpty(backendId))
-            //{
-            _logger.LogDebug($"Adding {HeaderNames.BACKEND_ID} header");
-            httpClient.DefaultRequestHeaders.Add(HeaderNames.BACKEND_ID, backendId.ToString());
-            //}
-            _logger.LogDebug("Removed and readded headers.");
-            return httpClient;
+            _logger.LogDebug($"Adding header '{HeaderNames.BACKEND_ID}'");
+            request.Headers.Add(HeaderNames.BACKEND_ID, backendId.ToString());
         }
     }
 }
