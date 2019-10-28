@@ -63,7 +63,7 @@ namespace sharedLibNet
         /// <param name="sensitive">set true if log message contains sensitive, privacy relevant or confidential information</param>
         /// <param name="key">base64 encoded public key (using libsodium PublicKeyBox encryption standard)</param>
         /// <returns></returns>
-        public static string CreateTraceObject(string content, bool sensitive = false,  string publicKey = null, string id = null)
+        public static string CreateTraceObject(string content, bool sensitive = false, string publicKey = null, string id = null)
         {
             dynamic obj = new ExpandoObject();
             obj.Sensitive = sensitive;

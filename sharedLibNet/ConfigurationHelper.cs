@@ -28,7 +28,7 @@ namespace sharedLibNet
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
-        public ConfigurationHelper(ILogger logger, bool silentFailure = true):this(silentFailure)
+        public ConfigurationHelper(ILogger logger, bool silentFailure = true) : this(silentFailure)
         {
             _logger = logger;
         }
@@ -84,7 +84,7 @@ namespace sharedLibNet
         /// <param name="configURL"></param>
         /// <param name="apiKey">api key for azure</param>
         /// <returns></returns>
-        public async Task<List<Stage>> GetConfigurationWithToken(string token, string client, string app, string configURL,string apiKey)
+        public async Task<List<Stage>> GetConfigurationWithToken(string token, string client, string app, string configURL, string apiKey)
         {
             dynamic config = new ExpandoObject();
             config.client = client;
@@ -147,8 +147,10 @@ namespace sharedLibNet
             {
                 _logger.LogDebug($"Removing {HeaderNames.BACKEND_ID} header");
                 httpClient.DefaultRequestHeaders.Remove(HeaderNames.BACKEND_ID);
-            }
-            
+            }
+
+
+
             _logger.LogDebug("Removed and readded headers.");
             return httpClient;
         }

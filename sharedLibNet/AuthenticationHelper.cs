@@ -99,7 +99,7 @@ namespace sharedLibNet
         /// <param name="authURL"></param>
         /// <param name="config"></param>
         /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
-        public AuthenticationHelper(string certIssuer, string authURL, AuthConfiguration config, bool silentFailure = true) :this(silentFailure)
+        public AuthenticationHelper(string certIssuer, string authURL, AuthConfiguration config, bool silentFailure = true) : this(silentFailure)
         {
             _authURL = authURL;
             CertIssuer = certIssuer;
@@ -331,7 +331,7 @@ namespace sharedLibNet
                     }
                     //if we get here we haven't found a valid header
                     log.LogCritical($"No valid token found");
-                    return null;        
+                    return null;
                 }
             }
         }
@@ -391,7 +391,7 @@ namespace sharedLibNet
                 {
                     log.LogCritical(errorMessage);
                 }
-                throw new HfException(errorMessage); 
+                throw new HfException(errorMessage);
             }
             if (!_certStrings.ContainsKey(target))
             {
