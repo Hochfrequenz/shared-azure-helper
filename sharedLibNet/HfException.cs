@@ -54,6 +54,7 @@ namespace sharedLibNet
         /// Http Exception Constructor that gets a HttpResponseMessage Class as argument and makes the Error visible.
         /// </summary>
         /// <param name="response">HttpResponseMessage object that caused this excetion.</param>
+
         public HfException(HttpResponseMessage response)
             : base($"Invalid Http response: statusCode({response.StatusCode}), content: {response.Content}")
         {

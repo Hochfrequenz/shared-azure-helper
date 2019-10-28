@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Net.Http;
@@ -15,7 +15,7 @@ namespace sharedLibNet
         protected HttpClient httpClient = new HttpClient();
         protected ILogger _logger = null;
         private readonly bool _silentFailure;
-
+      
         /// <summary>
         /// todo add docstring here
         /// </summary>
@@ -24,11 +24,13 @@ namespace sharedLibNet
         {
             this._silentFailure = silentFailure;
         }
+
         /// <summary>
         /// todo add docstring here
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
+
         public ConfigurationHelper(ILogger logger, bool silentFailure = true) : this(silentFailure)
         {
             _logger = logger;
