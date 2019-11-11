@@ -13,6 +13,7 @@ using EshDataExchangeFormats;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
@@ -33,6 +34,7 @@ namespace sharedLibNet
         public string AuthURL { get; set; }
         public string[] Issuers { get; set; }
         public string[] Audiences { get; set; }
+        public bool LogPII { get; set; }
     }
 
     public class AuthResult
@@ -62,7 +64,7 @@ namespace sharedLibNet
         protected string _authURL;
         public RestClient authClient = null;
         protected readonly bool _silentFailure;
-
+        
 
         [Obsolete("Please use the version to specify with an explicit AuthConfiguration", true)]
         public AuthenticationHelper(string certIssuer, string authURL, IConfiguration config)
@@ -503,6 +505,10 @@ namespace sharedLibNet
         // todo: docstring
         public async Task<AuthResult> ValidateTokenAsync(string value, ILogger log = null, string checkForAudience = null)
         {
+            if(_config.LogPII)
+            {
+                IdentityModelEventSource.ShowPII = true;
+            }
             if (_configurationManager == null)
             {
                 await Configure();
@@ -540,22 +546,41 @@ namespace sharedLibNet
                         ValidateIssuer = true,
                         ValidateIssuerSigningKey = true,
                         ValidateLifetime = true,
-                        IssuerSigningKeys = config.SigningKeys
+                        IssuerSigningKeys = config.SigningKeys,
+                        
                     };
                 }
                 else
                 {
-                    validationParameter = new TokenValidationParameters()
+                    if (_config.Audiences != null && _config.Audiences.Length > 0)
                     {
-                        RequireSignedTokens = true,
-                        ValidAudience = audience,
-                        ValidateAudience = true,
-                        ValidIssuer = issuer,
-                        ValidateIssuer = true,
-                        ValidateIssuerSigningKey = true,
-                        ValidateLifetime = true,
-                        IssuerSigningKeys = config.SigningKeys
-                    };
+                        validationParameter = new TokenValidationParameters()
+                        {
+                            RequireSignedTokens = true,
+                            ValidAudience = audience,
+                            ValidateAudience = true,
+                            ValidAudiences = _config.Audiences,
+                            ValidIssuer = issuer,
+                            ValidateIssuer = true,
+                            ValidateIssuerSigningKey = true,
+                            ValidateLifetime = true,
+                            IssuerSigningKeys = config.SigningKeys
+                        };
+                    }
+                    else
+                    {
+                        validationParameter = new TokenValidationParameters()
+                        {
+                            RequireSignedTokens = true,
+                            ValidAudience = audience,
+                            ValidateAudience = true,
+                            ValidIssuer = issuer,
+                            ValidateIssuer = true,
+                            ValidateIssuerSigningKey = true,
+                            ValidateLifetime = true,
+                            IssuerSigningKeys = config.SigningKeys
+                        };
+                    }
                 }
             }
 
@@ -589,6 +614,7 @@ namespace sharedLibNet
                 try
                 {
                     var handler = new JwtSecurityTokenHandler();
+                    
                     result = handler.ValidateToken(value, validationParameter, out token);
                 }
                 catch (SecurityTokenSignatureKeyNotFoundException)
