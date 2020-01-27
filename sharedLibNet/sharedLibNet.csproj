@@ -28,16 +28,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Hochfrequenz.BO4E.Extensions.Encryption" Version="0.0.188" />
-    <PackageReference Include="Hochfrequenz.BO4Enet" Version="0.0.188" />
-    <PackageReference Include="Hochfrequenz.BO4Enet.DataExchangeFormats" Version="0.0.70-CI-20191106-113826" />
+    <PackageReference Include="Hochfrequenz.BO4E.Extensions.Encryption" Version="0.1.0" />
+    <PackageReference Include="Hochfrequenz.BO4Enet" Version="0.1.2" />
+    <PackageReference Include="Hochfrequenz.BO4Enet.DataExchangeFormats" Version="0.0.73-CI-20200124-102703" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.Azure.EventGrid" Version="3.1.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.0.0" />
     <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.3" />
     <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.6" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.1.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="2.1.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.AzureAppConfiguration" Version="1.0.0-preview-008520001" />
