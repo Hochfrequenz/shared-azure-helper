@@ -371,7 +371,7 @@ namespace sharedLibNet
                     RequestUri = cacheUrl
                 };
                 AddHeaders(ref request, token, apiKey, bobId);
-                request.Headers.Add(HeaderNames.CacheService.ENCRYPTION_KEY_SHARED_SECRET, encryptionKey);
+                request.Headers.Add(HeaderNames.CacheService.ENCRYPTION_KEY_PUBLIC, encryptionKey);
                 var responseMessage = await httpClient.SendAsync(request);
                 if (!responseMessage.IsSuccessStatusCode)
                 {
