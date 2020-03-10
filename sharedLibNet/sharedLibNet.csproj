@@ -5,7 +5,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Company>Hochfrequenz</Company>
     <PackageId>Hochfrequenz.sharedAzureHelper</PackageId>
-    <Version>0.0.33</Version>
+    <Version>0.0.34</Version>
     <Authors>Hochfrequenz</Authors>
     <Product>sharedAzureHelper</Product>
     <PackageProjectUrl>https://github.com/Hochfrequenz/shared-azure-helper</PackageProjectUrl>
@@ -28,9 +28,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Hochfrequenz.BO4E.Extensions.Encryption" Version="0.1.0" />
-    <PackageReference Include="Hochfrequenz.BO4Enet" Version="0.1.2" />
-    <PackageReference Include="Hochfrequenz.BO4Enet.DataExchangeFormats" Version="0.0.73-CI-20200124-102703" />
+    <PackageReference Include="Hochfrequenz.BO4E.Extensions.Encryption" Version="0.1.1-beta20200310090384" />
+    <PackageReference Include="Hochfrequenz.BO4Enet" Version="0.1.9-beta20200310090384" />
+    <PackageReference Include="Hochfrequenz.BO4Enet.DataExchangeFormats" Version="0.0.73-CI-20200211-085503" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.Azure.EventGrid" Version="3.1.0" />
