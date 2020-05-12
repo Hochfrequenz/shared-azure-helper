@@ -91,9 +91,9 @@ namespace sharedLibNet
                 {
                     LogObject logObject = new LogObject
                     {
-                        datetime = DateTime.UtcNow,
-                        id = id,
-                        logMessage = content
+                        DateTime = DateTime.UtcNow,
+                        Id = id,
+                        LogMessage = content
                     };
                     obj.Content = enc.Encrypt(logObject, publicKey);
                 }

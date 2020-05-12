@@ -29,7 +29,7 @@
 
   <ItemGroup>
     <PackageReference Include="Hochfrequenz.BO4E.Extensions.Encryption" Version="0.1.1-beta20200310090384" />
-    <PackageReference Include="Hochfrequenz.BO4Enet" Version="0.1.9-beta20200310090384" />
+    <PackageReference Include="Hochfrequenz.BO4Enet" Version="0.2.1-beta20200512100507" />
     <PackageReference Include="Hochfrequenz.BO4Enet.DataExchangeFormats" Version="0.0.73-CI-20200211-085503" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
@@ -51,7 +51,7 @@
     <PackageReference Include="MiniProfiler.AspNetCore" Version="4.1.0" />
     <PackageReference Include="Moq" Version="4.14.1" />
     <PackageReference Include="RestSharp" Version="106.10.1" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.0-beta-20204-02" PrivateAssets="All" />
     <PackageReference Include="SourceLink.Copy.PdbFiles" Version="2.8.3" PrivateAssets="All" />
     <PackageReference Include="WindowsAzure.Storage" Version="9.3.3" />
   </ItemGroup>

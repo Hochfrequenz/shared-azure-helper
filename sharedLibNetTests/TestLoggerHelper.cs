@@ -51,9 +51,9 @@ namespace sharedLibNetTests
             EncryptedObject eo = JsonConvert.DeserializeObject<EncryptedObjectPublicKeyBox>(content.ToString());
             BusinessObject bo = dec.Decrypt(eo);
             Assert.NotNull(bo);
-            Assert.Equal(1, bo.versionStruktur);
+            Assert.Equal(1, bo.VersionStruktur);
             LogObject lo = bo as LogObject;
-            Assert.Equal("das ist ein verschlüsselter test", lo.logMessage);
+            Assert.Equal("das ist ein verschlüsselter test", lo.LogMessage);
         }
     }
 }
