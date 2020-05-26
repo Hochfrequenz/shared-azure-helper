@@ -3,13 +3,18 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+
 using BO4E.BO;
 using BO4E.meta;
+
 using EshDataExchangeFormats;
 using EshDataExchangeFormats.lookup;
+
 using Microsoft.Extensions.Logging;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+
 using StackExchange.Profiling;
 
 namespace sharedLibNet
@@ -70,7 +75,7 @@ namespace sharedLibNet
         /// <returns></returns>
         /// <exception cref="HfException" >if Could not perform lookup and silentFailure is false</exception>
 
-        public async Task<GenericLookupResult> RetrieveURLs(IList<Bo4eUri> urls, Uri lookupURL, string clientCertString, string apiKey, BOBackendId backendId)
+        public async Task<GenericLookupResult> RetrieveURLs(IList<Bo4eUri> urls, Uri lookupURL, string clientCertString, string apiKey, BOBackendId backendId, string correlationId = null)
         {
             if (string.IsNullOrWhiteSpace(clientCertString))
             {
@@ -120,6 +125,17 @@ namespace sharedLibNet
             }
             request.Headers.Add(HeaderNames.BACKEND_ID, backendId.ToString());
 
+            if (request.Headers.Contains("x-correlation-id"))
+            {
+                _logger.LogDebug($"Removing header 'x-correlation-id'");
+                request.Headers.Remove("x-correlation-id");
+            }
+            if (!string.IsNullOrEmpty(correlationId))
+            {
+                _logger.LogDebug($"Adding x-correlation-id header");
+                request.Headers.Add("x-correlation-id", correlationId);
+            }
+
             var responseMessage = await httpClient.SendAsync(request);
             if (!responseMessage.IsSuccessStatusCode)
             {
@@ -147,7 +163,7 @@ namespace sharedLibNet
         /// <param name="apiKey">hf-api api key</param>
         /// <param name="bobId">ID of backend</param>
         /// <returns>Tuple containing true/false depending if login was successful and returned status code</returns>
-        public async Task<Tuple<bool, HttpStatusCode>> CheckLogin(Uri lookupBaseUrl, string token, string apiKey, BOBackendId bobId)
+        public async Task<Tuple<bool, HttpStatusCode>> CheckLogin(Uri lookupBaseUrl, string token, string apiKey, BOBackendId bobId, string correlationId = null)
         {
             if (lookupBaseUrl == null)
             {
@@ -162,7 +178,7 @@ namespace sharedLibNet
                 Method = HttpMethod.Head,
                 RequestUri = lookupBaseUrl
             };
-            AddHeaders(ref request, token, apiKey, bobId);
+            AddHeaders(ref request, token, apiKey, bobId, correlationId);
             HttpResponseMessage response;
             try
             {
@@ -236,7 +252,7 @@ namespace sharedLibNet
         /// <param name="anonymizedResultsOnly"></param>
         /// <returns>Returns a listof suggested BusinessObject</returns>
         /// <exception cref="HfException" >if Could not perform lookup and silentFailure is false</exception>
-        public async Task<List<BusinessObject>> Suggest(string suggestion, string boe4Type, Uri lookupURL, string token, string apiKey, BOBackendId backendId, bool anonymizedResultsOnly = false)
+        public async Task<List<BusinessObject>> Suggest(string suggestion, string boe4Type, Uri lookupURL, string token, string apiKey, BOBackendId backendId, bool anonymizedResultsOnly = false, string correlationId = null)
         {
             var uri = new Uri($"{lookupURL}/suggestion/{boe4Type}/{suggestion}");
             _logger.LogDebug($"Suggestion URL is {uri}");
@@ -245,7 +261,7 @@ namespace sharedLibNet
                 Method = HttpMethod.Get,
                 RequestUri = uri
             };
-            AddHeaders(ref request, token, apiKey, backendId);
+            AddHeaders(ref request, token, apiKey, backendId, correlationId);
             if (request.Headers.Contains(HeaderNames.ANONYMIZED_RESULTS_ONLY))
             {
                 _logger.LogDebug($"Removing {HeaderNames.ANONYMIZED_RESULTS_ONLY} header");
@@ -319,7 +335,7 @@ namespace sharedLibNet
         /// <returns></returns>
         ///<exception cref="HfException" >if Could not perform lookup and silentFailure is false</exception>
 
-        public async Task<string> LookupJsonWithUserToken(string json, Uri lookupURL, string token, string apiKey, BOBackendId backendId)
+        public async Task<string> LookupJsonWithUserToken(string json, Uri lookupURL, string token, string apiKey, BOBackendId backendId, string correlationId = null)
         {
             using (MiniProfiler.Current.Step(nameof(LookupJsonWithUserToken)))
             {
@@ -329,7 +345,7 @@ namespace sharedLibNet
                     Method = HttpMethod.Post,
                     RequestUri = lookupURL
                 };
-                AddHeaders(ref request, token, apiKey, backendId);
+                AddHeaders(ref request, token, apiKey, backendId, correlationId);
                 var responseMessage = await httpClient.SendAsync(request);
                 if (!responseMessage.IsSuccessStatusCode)
                 {
@@ -359,7 +375,7 @@ namespace sharedLibNet
         /// <param name="bobId">unique ID of the backend</param>
         /// <returns>raw lookup response as string in case of success, null in case of failure</returns>
         /// <exception cref="HfException" >if Could not perform lookup and silentFailure is false</exception>
-        public async Task<string> InitialiseSuggestionCache(GenericCachingQuery initialisationQuery, Uri cacheUrl, string token, string apiKey, string encryptionKey, BOBackendId bobId)
+        public async Task<string> InitialiseSuggestionCache(GenericCachingQuery initialisationQuery, Uri cacheUrl, string token, string apiKey, string encryptionKey, BOBackendId bobId, string correlationId = null)
         {
             using (MiniProfiler.Current.Step($"{nameof(InitialiseSuggestionCache)} ({nameof(LookupHelper)})"))
             {
@@ -370,7 +386,7 @@ namespace sharedLibNet
                     Method = HttpMethod.Put,
                     RequestUri = cacheUrl
                 };
-                AddHeaders(ref request, token, apiKey, bobId);
+                AddHeaders(ref request, token, apiKey, bobId, correlationId);
                 request.Headers.Add(HeaderNames.CacheService.ENCRYPTION_KEY_PUBLIC, encryptionKey);
                 var responseMessage = await httpClient.SendAsync(request);
                 if (!responseMessage.IsSuccessStatusCode)
@@ -398,7 +414,7 @@ namespace sharedLibNet
         /// <param name="apiKey">subscription key for azure</param>
         /// <param name="backendId">ID of the backend</param>
         /// <returns></returns>
-        protected void AddHeaders(ref HttpRequestMessage request, string token, string apiKey, BOBackendId backendId)
+        protected void AddHeaders(ref HttpRequestMessage request, string token, string apiKey, BOBackendId backendId, string correlationId)
         {
             _logger.LogDebug(nameof(AddHeaders));
             if (request.Headers.Contains(HeaderNames.Auth.Authorization))
@@ -430,6 +446,17 @@ namespace sharedLibNet
             }
             _logger.LogDebug($"Adding header '{HeaderNames.BACKEND_ID}'");
             request.Headers.Add(HeaderNames.BACKEND_ID, backendId.ToString());
+
+            if (request.Headers.Contains("x-correlation-id"))
+            {
+                _logger.LogDebug($"Removing header 'x-correlation-id'");
+                request.Headers.Remove("x-correlation-id");
+            }
+            if (!string.IsNullOrEmpty(correlationId))
+            {
+                _logger.LogDebug($"Adding x-correlation-id header");
+                request.Headers.Add("x-correlation-id", correlationId);
+            }
         }
     }
 }
