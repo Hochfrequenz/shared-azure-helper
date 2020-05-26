@@ -346,7 +346,9 @@ namespace sharedLibNet
                     RequestUri = lookupURL
                 };
                 AddHeaders(ref request, token, apiKey, backendId, correlationId);
+                _logger.LogInformation($"Sending out lookup request with token");
                 var responseMessage = await httpClient.SendAsync(request);
+                _logger.LogInformation($"Got response from lookup request with token");
                 if (!responseMessage.IsSuccessStatusCode)
                 {
                     string responseContent = await responseMessage.Content.ReadAsStringAsync();
