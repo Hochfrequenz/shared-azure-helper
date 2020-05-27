@@ -55,12 +55,16 @@ namespace sharedLibNet
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
-        public LookupHelper(ILogger logger, bool silentFailure = true) : this(silentFailure)
+        public LookupHelper(ILogger logger,HttpClient client = null, bool silentFailure = true) : this(silentFailure)
         {
             _logger = logger;
             if (_logger != null)
             {
                 _logger.LogInformation($"Instantiated {nameof(LookupHelper)}. The HttpClient {nameof(httpClient)} has a timeout of {httpClient.Timeout.TotalSeconds} seconds.");
+            }
+            if(client!=null)
+            {
+                httpClient = client;
             }
         }
 
