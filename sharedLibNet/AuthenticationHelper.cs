@@ -1,4 +1,21 @@
-﻿using System;
+﻿using EshDataExchangeFormats;
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Logging;
+using Microsoft.IdentityModel.Protocols;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
+
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
+using RestSharp;
+
+using StackExchange.Profiling;
+
+using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.IdentityModel.Tokens.Jwt;
@@ -9,18 +26,6 @@ using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using EshDataExchangeFormats;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Logging;
-using Microsoft.IdentityModel.Protocols;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using RestSharp;
-using StackExchange.Profiling;
 namespace sharedLibNet
 {
     public class AuthConfiguration
@@ -64,7 +69,7 @@ namespace sharedLibNet
         protected string _authURL;
         public RestClient authClient = null;
         protected readonly bool _silentFailure;
-        
+
 
         [Obsolete("Please use the version to specify with an explicit AuthConfiguration", true)]
         public AuthenticationHelper(string certIssuer, string authURL, IConfiguration config)
@@ -328,12 +333,17 @@ namespace sharedLibNet
                         }
                         catch (ArgumentException ae)
                         {
-                            log.LogWarning($"Catched ArgumentException in ValidateTokenAsync. Probably due to malformed token: {ae.Message}. Returning null!");
+                            log.LogWarning(ae, $"Catched ArgumentException in ValidateTokenAsync. Probably due to malformed token: {ae.Message}. Returning null!");
                             log.LogDebug($"The stacktrace of the ArgumentException is: {ae.StackTrace}");
                             if (_silentFailure)
+                            {
+                                log.LogDebug($"{nameof(_silentFailure)}={_silentFailure}, returning null;");
                                 return null;
+                            }
                             else
+                            {
                                 throw new HfException($"Catched ArgumentException in ValidateTokenAsync. Probably due to malformed token: {ae.Message}. Returning null!");
+                            }
                         }
                     }
                     //if we get here we haven't found a valid header
@@ -505,7 +515,7 @@ namespace sharedLibNet
         // todo: docstring
         public async Task<AuthResult> ValidateTokenAsync(string value, ILogger log = null, string checkForAudience = null)
         {
-            if(_config.LogPII)
+            if (_config.LogPII)
             {
                 IdentityModelEventSource.ShowPII = true;
             }
@@ -524,7 +534,7 @@ namespace sharedLibNet
                 if (log != null)
                 {
                     // especially with invalidOperationException
-                    log.LogError($"Exception while awaiting GetConfigurationAsync: {e}. Does the service have a stable internet connection?");
+                    log.LogError(e, $"Exception while awaiting GetConfigurationAsync: {e}. Does the service have a stable internet connection?");
                 }
                 throw e;
             }
@@ -547,7 +557,7 @@ namespace sharedLibNet
                         ValidateIssuerSigningKey = true,
                         ValidateLifetime = true,
                         IssuerSigningKeys = config.SigningKeys,
-                        
+
                     };
                 }
                 else
@@ -599,11 +609,12 @@ namespace sharedLibNet
             }
             else
             {
+                string errorMessage = "Please define either ISSUER and AUDIENCE or ISSUERS AND AUDIENCES";
                 if (log != null)
                 {
-                    log.LogCritical("Please define either ISSUER and AUDIENCE or ISSUERS AND AUDIENCES");
+                    log.LogCritical(errorMessage);
                 }
-                throw new Exception("Please define either ISSUER and AUDIENCE or ISSUERS AND AUDIENCES");
+                throw new Exception(errorMessage);
             }
 
             ClaimsPrincipal result = null;
@@ -614,14 +625,25 @@ namespace sharedLibNet
                 try
                 {
                     var handler = new JwtSecurityTokenHandler();
-                    
                     result = handler.ValidateToken(value, validationParameter, out token);
                 }
-                catch (SecurityTokenSignatureKeyNotFoundException)
+                catch (SecurityTokenInvalidAudienceException stiae)
+                {
+                    if (log != null)
+                    {
+                        log.LogWarning(stiae, $"Error while validating token: {stiae.Message}");
+                    }
+                    throw stiae;
+                }
+                catch (SecurityTokenSignatureKeyNotFoundException stsknfe)
                 {
                     // This exception is thrown if the signature key of the JWT could not be found.
                     // This could be the case when the issuer changed its signing keys, so we trigger a 
                     // refresh and retry validation.
+                    if (log != null)
+                    {
+                        log.LogWarning(stsknfe, $"Error while validating token: {stsknfe.Message}");
+                    }
                     _configurationManager.RequestRefresh();
                     tries++;
                 }
@@ -629,7 +651,7 @@ namespace sharedLibNet
                 {
                     if (log != null)
                     {
-                        log.LogCritical($"SecurityTokenException {e}; returning null");
+                        log.LogCritical(e, $"SecurityTokenException {e}; returning null");
                     }
                     return null;
                 }
@@ -637,14 +659,14 @@ namespace sharedLibNet
                 {
                     if (log != null)
                     {
-                        log.LogCritical($"ArgumentException while Validating Token: '{e.Message}'; Seems like the value '{value}' is corrupted, incomplete or malformed.");
+                        log.LogCritical(e, $"ArgumentException while Validating Token: '{e.Message}'; Seems like the value '{value}' is corrupted, incomplete or malformed.");
                     }
                     throw e;
                 }
             }
             if (log != null)
             {
-                log.LogDebug("returning auth result from ValidateTokenAsync");
+                log.LogDebug($"returning auth result from {nameof(JwtSecurityTokenHandler.ValidateToken)}");
             }
             return new AuthResult(result, token, value);
         }
