@@ -1,10 +1,12 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.Azure.KeyVault;
+﻿using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.KeyVault.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
+
 using sharedLibNet.DependencyInjection.Interfaces;
+
+using System;
+using System.Threading.Tasks;
 
 namespace sharedLibNet.DependencyInjection
 {
