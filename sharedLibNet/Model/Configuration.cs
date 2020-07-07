@@ -6,11 +6,11 @@
 
 namespace sharedLibNet.Model
 {
-    using System.Collections.Generic;
-
-    using System.Globalization;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
+
+    using System.Collections.Generic;
+    using System.Globalization;
 
     public partial class Configuration
     {

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+
 using sharedLibNet.DependencyInjection.Interfaces;
 
 namespace sharedLibNet.DependencyInjection
@@ -13,3 +14,4 @@ namespace sharedLibNet.DependencyInjection
         }
     }
 }
+

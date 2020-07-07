@@ -1,5 +1,7 @@
 using EshDataExchangeFormats;
+
 using sharedLibNet;
+
 using Xunit;
 
 namespace sharedLibNetTests

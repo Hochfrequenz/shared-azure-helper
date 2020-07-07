@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
-
-using BO4E.BO;
+﻿using BO4E.BO;
 using BO4E.meta;
 
 using EshDataExchangeFormats;
@@ -16,6 +10,12 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
 using StackExchange.Profiling;
+
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace sharedLibNet
 {
@@ -55,14 +55,14 @@ namespace sharedLibNet
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
-        public LookupHelper(ILogger logger,HttpClient client = null, bool silentFailure = true) : this(silentFailure)
+        public LookupHelper(ILogger logger, HttpClient client = null, bool silentFailure = true) : this(silentFailure)
         {
             _logger = logger;
             if (_logger != null)
             {
                 _logger.LogInformation($"Instantiated {nameof(LookupHelper)}. The HttpClient {nameof(httpClient)} has a timeout of {httpClient.Timeout.TotalSeconds} seconds.");
             }
-            if(client!=null)
+            if (client != null)
             {
                 httpClient = client;
             }

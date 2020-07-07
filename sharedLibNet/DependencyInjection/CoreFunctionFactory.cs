@@ -1,7 +1,9 @@
-﻿using System;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
 using sharedLibNet.DependencyInjection.Interfaces;
+
+using System;
 
 namespace sharedLibNet.DependencyInjection
 {

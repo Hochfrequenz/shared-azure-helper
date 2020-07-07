@@ -1,21 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Dynamic;
-using System.Net.Http;
-using System.Threading.Tasks;
-using BO4E.BO;
+﻿using BO4E.BO;
 using BO4E.Extensions.Encryption;
+
 using EshDataExchangeFormats;
+
 using Microsoft.Azure.EventGrid;
 using Microsoft.Azure.EventGrid.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+
 using Sodium;
+
 using StackExchange.Profiling;
+
+using System;
+using System.Collections.Generic;
+using System.Dynamic;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace sharedLibNet
 {

@@ -1,10 +1,13 @@
-using System;
-using System.Net.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 using Microsoft.Extensions.DependencyInjection;
+
 using Mindscape.Raygun4Net.AspNetCore;
+
 using sharedLibNet.Helper;
+
+using System;
+using System.Net.Http;
 
 namespace sharedLibNet.DependencyInjection
 {

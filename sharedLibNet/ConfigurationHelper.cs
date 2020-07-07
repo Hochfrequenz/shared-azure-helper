@@ -1,12 +1,16 @@
+using EshDataExchangeFormats;
+
+using Microsoft.Extensions.Logging;
+
+using Newtonsoft.Json;
+
+using sharedLibNet.Model;
+
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Net.Http;
 using System.Threading.Tasks;
-using EshDataExchangeFormats;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using sharedLibNet.Model;
 
 namespace sharedLibNet
 {
@@ -15,7 +19,7 @@ namespace sharedLibNet
         protected HttpClient httpClient = new HttpClient();
         protected ILogger _logger = null;
         private readonly bool _silentFailure;
-      
+
         /// <summary>
         /// todo add docstring here
         /// </summary>
