@@ -97,7 +97,7 @@ namespace sharedLibNet
                 {
                     LogObject logObject = new LogObject
                     {
-                        DateTime = DateTime.UtcNow,
+                        Datetime = DateTime.UtcNow,
                         Id = id,
                         LogMessage = content
                     };

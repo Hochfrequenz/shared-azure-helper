@@ -1,4 +1,7 @@
-﻿using BO4E.BO;
+﻿using System;
+using System.Dynamic;
+
+using BO4E.BO;
 using BO4E.Extensions.Encryption;
 
 using Microsoft.Extensions.Logging;
@@ -9,9 +12,6 @@ using Newtonsoft.Json.Linq;
 using sharedLibNet;
 
 using Sodium;
-
-using System;
-using System.Dynamic;
 
 using Xunit;
 
@@ -57,7 +57,7 @@ namespace sharedLibNetTests
             EncryptedObject eo = JsonConvert.DeserializeObject<EncryptedObjectPublicKeyBox>(content.ToString());
             BusinessObject bo = dec.Decrypt(eo);
             Assert.NotNull(bo);
-            Assert.Equal(1, bo.VersionStruktur);
+            Assert.Equal(1, bo.versionStruktur);
             LogObject lo = bo as LogObject;
             Assert.Equal("das ist ein verschlüsselter test", lo.LogMessage);
         }
