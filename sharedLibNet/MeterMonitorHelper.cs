@@ -187,20 +187,6 @@ namespace sharedLibNet
 
         /// <summary>
         /// Get MeterMonitor By Id
-        /// Posts the content from <paramref name="json"/> to the URL specified in <paramref name="lookupURL"/> using the token
-        /// </summary>
-        /// <param name="json">serialised lookup request</param>
-        /// <param name="lookupURL">URL of the lookup service</param>
-        /// <param name="token">token to authenticate</param>
-        /// <param name="apiKey">API key for gateway</param>
-        /// <param name="backendId">ID of Backend</param>
-        /// <returns></returns>
-        ///<exception cref="HfException" >if Could not perform lookup and silentFailure is false</exception>
-        public string sss() { return ""; }
-
-
-        /// <summary>
-        /// Get MeterMonitor By Id
         /// </summary>
         /// <param name="internalPodId">internalPodId as a part of key</param>
         /// <param name="logikzw">logikzw as a part of key</param>
