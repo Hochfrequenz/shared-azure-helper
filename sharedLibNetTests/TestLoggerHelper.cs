@@ -1,4 +1,7 @@
-﻿using BO4E.BO;
+﻿using System;
+using System.Dynamic;
+
+using BO4E.BO;
 using BO4E.Extensions.Encryption;
 
 using Microsoft.Extensions.Logging;
@@ -9,9 +12,6 @@ using Newtonsoft.Json.Linq;
 using sharedLibNet;
 
 using Sodium;
-
-using System;
-using System.Dynamic;
 
 using Xunit;
 

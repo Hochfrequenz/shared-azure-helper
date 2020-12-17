@@ -92,7 +92,7 @@ namespace sharedLibNet
 
             GenericLookupQuery urlObject = new GenericLookupQuery()
             {
-                uris = urls
+                Uris = urls
             };
             string requestBody = JsonConvert.SerializeObject(urlObject, new StringEnumConverter());
             var request = new HttpRequestMessage()
@@ -216,7 +216,7 @@ namespace sharedLibNet
         {
             GenericLookupQuery urlObject = new GenericLookupQuery()
             {
-                uris = urls
+                Uris = urls
             };
             string requestBody = JsonConvert.SerializeObject(urlObject);
             var request = new HttpRequestMessage()
