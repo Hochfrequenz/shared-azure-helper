@@ -133,7 +133,7 @@ namespace sharedLibNet
                 _logger.LogWarning($"Could not deserialize '{json}' as {typeof(T)}: {e}");
                 if (throwException)
                 {
-                    _logger.LogDebug("Forwarding Exception...");
+                    _logger.LogDebug(e, "Forwarding Exception...");
                     throw e;
                 }
                 else
