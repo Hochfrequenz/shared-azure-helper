@@ -8,6 +8,7 @@ using EshDataExchangeFormats;
 using EshDataExchangeFormats.lookup;
 using EshDataExchangeFormats.metermonitor;
 
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 
 using Newtonsoft.Json;
@@ -151,18 +152,27 @@ namespace sharedLibNet
         /// <param name="token">token to authenticate</param>
         /// <param name="apiKey">API key for gateway</param>
         /// <param name="backendId">ID of Backend</param>
+        /// <param name="limit">limit number of results</param>
+        /// <param name="offset">number of skip results</param>
+        /// <param name="withError">with 'toError'?</param>
         /// <returns>a list of MeterMonitorResult <see cref="MeterMonitorResult"/>></returns>
         ///<exception cref="HfException" >if Could not get the MeterMonitor list and silentFailure is false</exception>
-        public async Task<IList<MeterMonitorResult>> GetMeterMonitors(string token, string apiKey, BOBackendId backendId)
+        public async Task<IList<MeterMonitorResult>> GetMeterMonitors(string token, string apiKey, BOBackendId backendId, uint limit = 0, uint offset = 0, bool withError = true)
         {
             using (MiniProfiler.Current.Step(nameof(GetMeterMonitors)))
             {
+                Dictionary<string, string> queries = new Dictionary<string, string>();
+                queries.Add(nameof(limit), limit.ToString());
+                queries.Add(nameof(offset), offset.ToString());
+                queries.Add(nameof(withError), withError.ToString());
                 HttpRequestMessage request = new HttpRequestMessage()
                 {
                     Method = HttpMethod.Get,
+                    RequestUri = new Uri(QueryHelpers.AddQueryString("", queries), UriKind.Relative)
                 };
                 AddHeaders(ref request, token, apiKey, backendId);
                 _logger.LogInformation($"Sending out MeterMonitor List request with token");
+
                 var responseMessage = await httpClient.SendAsync(request);
                 _logger.LogInformation($"Got response from MeterMonitor List request with token");
                 if (!responseMessage.IsSuccessStatusCode)
@@ -196,6 +206,7 @@ namespace sharedLibNet
         /// <param name="token">token to authenticate</param>
         /// <param name="apiKey">API key for gateway</param>
         /// <param name="backendId">ID of Backend</param>
+        /// <param name="withError">with 'toError'?</param>
         /// <returns></returns>
         ///<exception cref="HfException" >if Could not get the MeterMonitor and silentFailure is false</exception>
         public async Task<MeterMonitorResult> GetMeterMonitorById(
@@ -204,7 +215,7 @@ namespace sharedLibNet
             string profile,
             string profileRole,
             string serviceid,
-            string token, string apiKey, BOBackendId backendId)
+            string token, string apiKey, BOBackendId backendId, bool withError = true)
         {
             using (MiniProfiler.Current.Step(nameof(GetMeterMonitorById)))
             {
@@ -233,10 +244,18 @@ namespace sharedLibNet
                     _logger.LogError($"{nameof(serviceid)} could not be null in {nameof(MeterMonitorHelper)}{nameof(GetMeterMonitorById)}");
                     throw new ArgumentNullException(serviceid, $"{nameof(serviceid)} could not be null in {nameof(MeterMonitorHelper)}{nameof(GetMeterMonitorById)}");
                 }
+                Dictionary<string, string> queries = new Dictionary<string, string>();
+                queries.Add(nameof(internalPodId), internalPodId);
+                queries.Add(nameof(logikzw), logikzw);
+                queries.Add(nameof(profile), profile);
+                queries.Add(nameof(profileRole), profileRole);
+                queries.Add(nameof(serviceid), serviceid);
+                queries.Add(nameof(withError), withError.ToString());
+
                 HttpRequestMessage request = new HttpRequestMessage()
                 {
                     Method = HttpMethod.Get,
-                    RequestUri = new Uri("getbyid"),
+                    RequestUri = new Uri(QueryHelpers.AddQueryString("getbyid", queries), UriKind.Relative)
                 };
                 AddHeaders(ref request, token, apiKey, backendId);
                 _logger.LogInformation($"Sending out MeterMonitor GetbyId request with token");
@@ -261,7 +280,6 @@ namespace sharedLibNet
                 return resultObject;
             }
         }
-
 
         /// <summary>
         /// set requests headers and removes them prior to adding if they're already present.
