@@ -18,9 +18,9 @@ namespace sharedLibNet.DependencyInjection
         public async Task<TOutput> InvokeAsync<TInput, TOutput>(TInput input, FunctionOptionBase options)
         {
             var keyOptions = options as KeyVaultFunctionOptions;
-            keyvault_client = keyOptions.ClientId;
-            keyvault_secret = keyOptions.ClientSecret;
-            keyvault_url = keyOptions.Url;
+            _keyvaultClient = keyOptions.ClientId;
+            _keyvaultSecret = keyOptions.ClientSecret;
+            _keyvaultUrl = keyOptions.Url;
             KVClient = new KeyVaultClient(GetToken, keyOptions.Client);
             string elementName = input as string;
             TOutput result;
@@ -30,7 +30,7 @@ namespace sharedLibNet.DependencyInjection
                 {
                     Log.LogDebug("Using GetSecretAsync");
                 }
-                result = (TOutput)(object)(await KVClient.GetSecretAsync(keyvault_url, elementName));
+                result = (TOutput)(object)(await KVClient.GetSecretAsync(_keyvaultUrl, elementName));
             }
             else
             {   //if(typeof(TOutput)==typeof(CertificateBundle))
@@ -38,20 +38,20 @@ namespace sharedLibNet.DependencyInjection
                 {
                     Log.LogDebug("Using GetCertificateAsync");
                 }
-                result = (TOutput)(object)await KVClient.GetCertificateAsync(keyvault_url, elementName);
+                result = (TOutput)(object)await KVClient.GetCertificateAsync(_keyvaultUrl, elementName);
             }
             return result;
         }
 
-        private static string keyvault_client;
-        private static string keyvault_secret;
-        private static string keyvault_url;
+        private static string _keyvaultClient;
+        private static string _keyvaultSecret;
+        private static string _keyvaultUrl;
 
         internal static async Task<string> GetToken(string authority, string resource, string scope)
         {
             var authContext = new AuthenticationContext(authority);
             ClientCredential clientCred = new ClientCredential(
-                keyvault_client, keyvault_secret
+                _keyvaultClient, _keyvaultSecret
                 );
             AuthenticationResult result = await authContext.AcquireTokenAsync(resource, clientCred);
 
