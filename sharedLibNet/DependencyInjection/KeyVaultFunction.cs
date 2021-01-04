@@ -14,10 +14,6 @@ namespace sharedLibNet.DependencyInjection
     {
         public ILogger Log { get; set; }
         protected KeyVaultClient KVClient;
-        public KeyVaultFunction()
-        {
-
-        }
 
         public async Task<TOutput> InvokeAsync<TInput, TOutput>(TInput input, FunctionOptionBase options)
         {
