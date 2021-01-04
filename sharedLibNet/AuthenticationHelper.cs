@@ -400,7 +400,7 @@ namespace sharedLibNet
             }
             request.AddHeader(HeaderNames.Auth.Authorization, "Bearer " + _accessToken);
             request.AddHeader(HeaderNames.Auth.HfAuthorization, "Bearer " + _accessToken);
-            IRestResponse response = await authClient.ExecuteTaskAsync(request);
+            IRestResponse response = await authClient.ExecuteAsync(request);
             if (response.IsSuccessful == false)
             {
                 string errorMessage = $"AuthService ({authUrl}) could not be reached: {response.StatusCode}";
@@ -477,7 +477,7 @@ namespace sharedLibNet
                     throw new InvalidOperationException(errorMessage);
                 }
 
-                IRestResponse response = await client.ExecuteTaskAsync(request);
+                IRestResponse response = await client.ExecuteAsync(request);
                 if (log != null)
                 {
                     log.LogDebug($"Oauth response status code: {response.StatusCode}");
