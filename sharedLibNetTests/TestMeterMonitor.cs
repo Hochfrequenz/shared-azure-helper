@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using EshDataExchangeFormats;
 using sharedLibNet;
 using Xunit;
@@ -12,7 +13,7 @@ namespace sharedLibNetTests
         /// just for local test
         /// </summary>
         [Fact]
-        public async void TestGetAll()
+        public async Task TestGetAll()
         {
             var result = LoggerHelper.CreateLogger("Dei Mudder sein Service", null, null);
             var logger = result.logger;
