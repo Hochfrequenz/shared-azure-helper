@@ -8,7 +8,6 @@ namespace sharedLibNet.DependencyInjection
     {
         public virtual void Load(IServiceCollection services)
         {
-            return;
         }
     }
 }
