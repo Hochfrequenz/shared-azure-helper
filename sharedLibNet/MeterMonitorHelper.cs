@@ -22,10 +22,10 @@ namespace sharedLibNet
     /// </summary>
     public class MeterMonitorHelper
     {
-        protected static HttpClient httpClient = new HttpClient();
-        protected ILogger _logger = null;
+        protected static HttpClient HttpClient = new HttpClient();
+        protected readonly ILogger Logger = null;
 
-        protected readonly bool _silentFailure;
+        protected readonly bool SilentFailure;
 
         private const string MIME_TYPE_JSON = "application/json"; // replace with MediaTypeNames.Application.Json as soon as .net core 2.1 is used
 
@@ -36,7 +36,7 @@ namespace sharedLibNet
         /// </summary>
         static MeterMonitorHelper()
         {
-            httpClient.Timeout = TimeSpan.FromMinutes(DEFAULT_TIMEOUT_MINUTES);
+            HttpClient.Timeout = TimeSpan.FromMinutes(DEFAULT_TIMEOUT_MINUTES);
         }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace sharedLibNet
         /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
         public MeterMonitorHelper(bool silentFailure = true)
         {
-            _silentFailure = silentFailure;
+            SilentFailure = silentFailure;
         }
 
         /// <summary>
@@ -55,11 +55,11 @@ namespace sharedLibNet
         /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
         public MeterMonitorHelper(ILogger logger, HttpClient client = null, bool silentFailure = true) : this(silentFailure)
         {
-            _logger = logger;
-            _logger?.LogInformation($"Instantiated {nameof(MeterMonitorHelper)}. The HttpClient {nameof(httpClient)} has a timeout of {httpClient.Timeout.TotalSeconds} seconds.");
+            Logger = logger;
+            Logger?.LogInformation($"Instantiated {nameof(MeterMonitorHelper)}. The HttpClient {nameof(HttpClient)} has a timeout of {HttpClient.Timeout.TotalSeconds} seconds.");
             if (client != null)
             {
-                httpClient = client;
+                HttpClient = client;
             }
         }
 
@@ -89,19 +89,19 @@ namespace sharedLibNet
             HttpResponseMessage response;
             try
             {
-                response = await httpClient.SendAsync(request);
+                response = await HttpClient.SendAsync(request);
             }
             catch (Exception e)
             {
-                _logger.LogError($"Request (try login) failed. {nameof(meterMonitorBaseUrl)}: '{meterMonitorBaseUrl}', {nameof(token)}: '{token}', {nameof(bobId)}: '{bobId}'; Exception: {e}.");
-                _logger.LogInformation($"Returning negative result with status code {HttpStatusCode.BadGateway} / 502");
+                Logger.LogError($"Request (try login) failed. {nameof(meterMonitorBaseUrl)}: '{meterMonitorBaseUrl}', {nameof(token)}: '{token}', {nameof(bobId)}: '{bobId}'; Exception: {e}.");
+                Logger.LogInformation($"Returning negative result with status code {HttpStatusCode.BadGateway} / 502");
                 return new Tuple<bool, HttpStatusCode>(false, HttpStatusCode.BadGateway);
             }
             finally
             {
                 request.Dispose();
             }
-            _logger.LogDebug($"Response has status code {response.StatusCode}. See lookup service logs for details.");
+            Logger.LogDebug($"Response has status code {response.StatusCode}. See lookup service logs for details.");
             return new Tuple<bool, HttpStatusCode>(response.IsSuccessStatusCode, response.StatusCode);
         }
 
@@ -117,25 +117,25 @@ namespace sharedLibNet
         {
             if (string.IsNullOrWhiteSpace(json))
             {
-                _logger.LogWarning($"String supposed to be valid json but is null or white space: '{json}'");
+                Logger.LogWarning($"String supposed to be valid json but is null or white space: '{json}'");
             }
             try
             {
                 T result = JsonConvert.DeserializeObject<T>(json);
-                _logger.LogDebug($"Successfully deserialised as {typeof(T)}");
+                Logger.LogDebug($"Successfully deserialised as {typeof(T)}");
                 return result;
             }
             catch (Exception e)
             {
-                _logger.LogWarning($"Could not deserialize '{json}' as {typeof(T)}: {e}");
+                Logger.LogWarning($"Could not deserialize '{json}' as {typeof(T)}: {e}");
                 if (throwException)
                 {
-                    _logger.LogDebug(e, "Forwarding Exception...");
+                    Logger.LogDebug(e, "Forwarding Exception...");
                     throw e;
                 }
                 else
                 {
-                    _logger.LogDebug("Retuning null");
+                    Logger.LogDebug("Retuning null");
                     object result = null;
                     return (T)result;
                 }
@@ -158,25 +158,27 @@ namespace sharedLibNet
         {
             using (MiniProfiler.Current.Step(nameof(GetMeterMonitors)))
             {
-                Dictionary<string, string> queries = new Dictionary<string, string>();
-                queries.Add(nameof(limit), limit.ToString());
-                queries.Add(nameof(offset), offset.ToString());
-                queries.Add(nameof(withError), withError.ToString());
+                Dictionary<string, string> queries = new Dictionary<string, string>
+                {
+                    {nameof(limit), limit.ToString()},
+                    {nameof(offset), offset.ToString()},
+                    {nameof(withError), withError.ToString()}
+                };
                 HttpRequestMessage request = new HttpRequestMessage()
                 {
                     Method = HttpMethod.Get,
                     RequestUri = new Uri(QueryHelpers.AddQueryString("", queries), UriKind.Relative)
                 };
                 AddHeaders(ref request, token, apiKey, backendId);
-                _logger.LogInformation($"Sending out MeterMonitor List request with token");
+                Logger.LogInformation($"Sending out MeterMonitor List request with token");
 
-                var responseMessage = await httpClient.SendAsync(request);
-                _logger.LogInformation($"Got response from MeterMonitor List request with token");
+                var responseMessage = await HttpClient.SendAsync(request);
+                Logger.LogInformation($"Got response from MeterMonitor List request with token");
                 if (!responseMessage.IsSuccessStatusCode)
                 {
                     string response = await responseMessage.Content.ReadAsStringAsync();
-                    _logger.LogCritical($"Could not perform MeterMonitor List: {responseMessage.ReasonPhrase} / {response}; GET to {httpClient.BaseAddress}");
-                    if (_silentFailure)
+                    Logger.LogCritical($"Could not perform MeterMonitor List: {responseMessage.ReasonPhrase} / {response}; GET to {HttpClient.BaseAddress}");
+                    if (SilentFailure)
                     {
                         return null;
                     }
@@ -185,7 +187,7 @@ namespace sharedLibNet
                         throw new HfException(responseMessage);
                     }
                 }
-                _logger.LogDebug($"Successfully retrieved MeterMonitor List response with status code {responseMessage.StatusCode}");
+                Logger.LogDebug($"Successfully retrieved MeterMonitor List response with status code {responseMessage.StatusCode}");
                 string responseContent = await responseMessage.Content.ReadAsStringAsync();
                 var resultObject = DeserializeObjectAndLog<List<MeterMonitorResult>>(responseContent);
                 return resultObject;
@@ -218,27 +220,27 @@ namespace sharedLibNet
             {
                 if (string.IsNullOrEmpty(internalPodId))
                 {
-                    _logger.LogError($"{nameof(internalPodId)} could not be null in {nameof(MeterMonitorHelper)}{nameof(GetMeterMonitorById)}");
+                    Logger.LogError($"{nameof(internalPodId)} could not be null in {nameof(MeterMonitorHelper)}{nameof(GetMeterMonitorById)}");
                     throw new ArgumentNullException(internalPodId, $"{nameof(internalPodId)} could not be null in {nameof(MeterMonitorHelper)}{nameof(GetMeterMonitorById)}");
                 }
                 if (string.IsNullOrEmpty(logikzw))
                 {
-                    _logger.LogError($"{nameof(logikzw)} could not be null in {nameof(MeterMonitorHelper)}{nameof(GetMeterMonitorById)}");
+                    Logger.LogError($"{nameof(logikzw)} could not be null in {nameof(MeterMonitorHelper)}{nameof(GetMeterMonitorById)}");
                     throw new ArgumentNullException(logikzw, $"{nameof(logikzw)} could not be null in {nameof(MeterMonitorHelper)}{nameof(GetMeterMonitorById)}");
                 }
                 if (string.IsNullOrEmpty(profile))
                 {
-                    _logger.LogError($"{nameof(profile)} could not be null in {nameof(MeterMonitorHelper)}{nameof(GetMeterMonitorById)}");
+                    Logger.LogError($"{nameof(profile)} could not be null in {nameof(MeterMonitorHelper)}{nameof(GetMeterMonitorById)}");
                     throw new ArgumentNullException(profile, $"{nameof(profile)} could not be null in {nameof(MeterMonitorHelper)}{nameof(GetMeterMonitorById)}");
                 }
                 if (string.IsNullOrEmpty(profileRole))
                 {
-                    _logger.LogError($"{nameof(profileRole)} could not be null in {nameof(MeterMonitorHelper)}{nameof(GetMeterMonitorById)}");
+                    Logger.LogError($"{nameof(profileRole)} could not be null in {nameof(MeterMonitorHelper)}{nameof(GetMeterMonitorById)}");
                     throw new ArgumentNullException(profileRole, $"{nameof(profileRole)} could not be null in {nameof(MeterMonitorHelper)}{nameof(GetMeterMonitorById)}");
                 }
                 if (string.IsNullOrEmpty(serviceid))
                 {
-                    _logger.LogError($"{nameof(serviceid)} could not be null in {nameof(MeterMonitorHelper)}{nameof(GetMeterMonitorById)}");
+                    Logger.LogError($"{nameof(serviceid)} could not be null in {nameof(MeterMonitorHelper)}{nameof(GetMeterMonitorById)}");
                     throw new ArgumentNullException(serviceid, $"{nameof(serviceid)} could not be null in {nameof(MeterMonitorHelper)}{nameof(GetMeterMonitorById)}");
                 }
                 Dictionary<string, string> queries = new Dictionary<string, string>();
@@ -255,14 +257,14 @@ namespace sharedLibNet
                     RequestUri = new Uri(QueryHelpers.AddQueryString("getbyid", queries), UriKind.Relative)
                 };
                 AddHeaders(ref request, token, apiKey, backendId);
-                _logger.LogInformation($"Sending out MeterMonitor GetbyId request with token");
-                var responseMessage = await httpClient.SendAsync(request);
-                _logger.LogInformation($"Got response from MeterMonitor GetbyId request with token");
+                Logger.LogInformation($"Sending out MeterMonitor GetbyId request with token");
+                var responseMessage = await HttpClient.SendAsync(request);
+                Logger.LogInformation($"Got response from MeterMonitor GetbyId request with token");
                 if (!responseMessage.IsSuccessStatusCode)
                 {
                     string response = await responseMessage.Content.ReadAsStringAsync();
-                    _logger.LogCritical($"Could not perform MeterMonitor GetbyId: {responseMessage.ReasonPhrase} / {response}; GET to {httpClient.BaseAddress}{request.RequestUri}");
-                    if (_silentFailure)
+                    Logger.LogCritical($"Could not perform MeterMonitor GetbyId: {responseMessage.ReasonPhrase} / {response}; GET to {HttpClient.BaseAddress}{request.RequestUri}");
+                    if (SilentFailure)
                     {
                         return null;
                     }
@@ -271,7 +273,7 @@ namespace sharedLibNet
                         throw new HfException(responseMessage);
                     }
                 }
-                _logger.LogDebug($"Successfully retrieved MeterMonitor GetbyId response with status code {responseMessage.StatusCode}");
+                Logger.LogDebug($"Successfully retrieved MeterMonitor GetbyId response with status code {responseMessage.StatusCode}");
                 string responseContent = await responseMessage.Content.ReadAsStringAsync();
                 var resultObject = DeserializeObjectAndLog<MeterMonitorResult>(responseContent);
                 return resultObject;
@@ -288,35 +290,35 @@ namespace sharedLibNet
         /// <returns></returns>
         protected void AddHeaders(ref HttpRequestMessage request, string token, string apiKey, BOBackendId backendId)
         {
-            _logger.LogDebug(nameof(AddHeaders));
+            Logger.LogDebug(nameof(AddHeaders));
             if (request.Headers.Contains(HeaderNames.Auth.Authorization))
             {
-                _logger.LogDebug($"Removing header '{HeaderNames.Auth.Authorization}'");
+                Logger.LogDebug($"Removing header '{HeaderNames.Auth.Authorization}'");
                 request.Headers.Remove(HeaderNames.Auth.Authorization);
             }
             request.Headers.Add(HeaderNames.Auth.Authorization, "Bearer " + token);
             if (request.Headers.Contains(HeaderNames.Auth.HfAuthorization))
             {
-                _logger.LogDebug($"Removing header '{HeaderNames.Auth.HfAuthorization}'");
+                Logger.LogDebug($"Removing header '{HeaderNames.Auth.HfAuthorization}'");
                 request.Headers.Remove(HeaderNames.Auth.HfAuthorization);
             }
             request.Headers.Add(HeaderNames.Auth.HfAuthorization, "Bearer " + token);
             if (request.Headers.Contains(HeaderNames.Azure.SUBSCRIPTION_KEY))
             {
-                _logger.LogDebug($"Removing header '{HeaderNames.Azure.SUBSCRIPTION_KEY}'");
+                Logger.LogDebug($"Removing header '{HeaderNames.Azure.SUBSCRIPTION_KEY}'");
                 request.Headers.Remove(HeaderNames.Azure.SUBSCRIPTION_KEY);
             }
             if (!string.IsNullOrEmpty(apiKey))
             {
-                _logger.LogDebug($"Adding header '{HeaderNames.Azure.SUBSCRIPTION_KEY}'");
+                Logger.LogDebug($"Adding header '{HeaderNames.Azure.SUBSCRIPTION_KEY}'");
                 request.Headers.Add(HeaderNames.Azure.SUBSCRIPTION_KEY, apiKey);
             }
             if (request.Headers.Contains(HeaderNames.BACKEND_ID))
             {
-                _logger.LogDebug($"Removing header '{HeaderNames.BACKEND_ID}'");
+                Logger.LogDebug($"Removing header '{HeaderNames.BACKEND_ID}'");
                 request.Headers.Remove(HeaderNames.BACKEND_ID);
             }
-            _logger.LogDebug($"Adding header '{HeaderNames.BACKEND_ID}'");
+            Logger.LogDebug($"Adding header '{HeaderNames.BACKEND_ID}'");
             request.Headers.Add(HeaderNames.BACKEND_ID, backendId.ToString());
         }
     }
