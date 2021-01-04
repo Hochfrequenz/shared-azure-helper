@@ -28,7 +28,7 @@ namespace sharedLibNet.DependencyInjection
                     .AddAzureAppConfiguration(options =>
                     {
                         options.Connect(Environment.GetEnvironmentVariable(EnvironmentVariableNames.ENV_CONFIG_CONNECTION))
-                               .Select(KeyFilter.Any, LabelFilter.Null)
+                               .Select(KeyFilter.Any)
                                .Select(KeyFilter.Any, Environment.GetEnvironmentVariable(EnvironmentVariableNames.SYSTEM_ENVIRONMENT));
                     })
                     .Build();
