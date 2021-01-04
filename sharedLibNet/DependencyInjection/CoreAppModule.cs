@@ -32,7 +32,7 @@ namespace sharedLibNet.DependencyInjection
                                .Select(KeyFilter.Any, Environment.GetEnvironmentVariable(EnvironmentVariableNames.SYSTEM_ENVIRONMENT));
                     })
                     .Build();
-            var _config = new AuthConfiguration()
+            var authConfiguration = new AuthConfiguration()
             {
                 ApiKey = config[EnvironmentVariableNames.ENV_HF_API_KEY],
                 AuthURL = config[EnvironmentVariableNames.ENV_AUTH_URL],
@@ -45,11 +45,11 @@ namespace sharedLibNet.DependencyInjection
                 Issuer = config[AppConfigurationKey.ISSUER],
                 AccessToken = config[AppConfigurationKey.ACCESS_TOKEN],
             };
-            var _authHelper = new AuthenticationHelper(_authServiceName, config[EnvironmentVariableNames.ENV_AUTH_URL], _config);
-            var _raygun = new RaygunClient(config[EnvironmentVariableNames.ENV_RAYGUN_API_KEY]);
-            services.AddSingleton<IAuthenticationHelper>(_authHelper);
+            var authHelper = new AuthenticationHelper(_authServiceName, config[EnvironmentVariableNames.ENV_AUTH_URL], authConfiguration);
+            var raygun = new RaygunClient(config[EnvironmentVariableNames.ENV_RAYGUN_API_KEY]);
+            services.AddSingleton<IAuthenticationHelper>(authHelper);
             services.AddSingleton<IConfiguration>(config);
-            services.AddSingleton(_raygun);
+            services.AddSingleton(raygun);
             services.AddSingleton<HttpClient>();
         }
     }
