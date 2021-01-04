@@ -47,7 +47,7 @@ namespace sharedLibNet
         /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
         public LookupHelper(bool silentFailure = true)
         {
-            this._silentFailure = silentFailure;
+            _silentFailure = silentFailure;
         }
 
         /// <summary>
@@ -97,7 +97,7 @@ namespace sharedLibNet
             string requestBody = JsonConvert.SerializeObject(urlObject, new StringEnumConverter());
             var request = new HttpRequestMessage()
             {
-                Content = new StringContent(requestBody, System.Text.UTF8Encoding.UTF8, MIME_TYPE_JSON),
+                Content = new StringContent(requestBody, System.Text.Encoding.UTF8, MIME_TYPE_JSON),
                 RequestUri = lookupURL,
                 Method = HttpMethod.Post
             };
@@ -221,7 +221,7 @@ namespace sharedLibNet
             string requestBody = JsonConvert.SerializeObject(urlObject);
             var request = new HttpRequestMessage()
             {
-                Content = new StringContent(requestBody, System.Text.UTF8Encoding.UTF8, MIME_TYPE_JSON),
+                Content = new StringContent(requestBody, System.Text.Encoding.UTF8, MIME_TYPE_JSON),
                 Method = HttpMethod.Post,
                 RequestUri = lookupURL
             };
@@ -345,7 +345,7 @@ namespace sharedLibNet
             {
                 HttpRequestMessage request = new HttpRequestMessage()
                 {
-                    Content = new StringContent(json, System.Text.UTF8Encoding.UTF8, MIME_TYPE_JSON),
+                    Content = new StringContent(json, System.Text.Encoding.UTF8, MIME_TYPE_JSON),
                     Method = HttpMethod.Post,
                     RequestUri = lookupURL
                 };

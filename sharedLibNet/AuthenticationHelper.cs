@@ -50,9 +50,9 @@ namespace sharedLibNet
         public string Token { get; private set; }
         public AuthResult(ClaimsPrincipal principal, SecurityToken tokenInfo, string token)
         {
-            this.Principal = principal;
-            this.TokenInfo = tokenInfo;
-            this.Token = token;
+            Principal = principal;
+            TokenInfo = tokenInfo;
+            Token = token;
         }
     }
 
@@ -96,7 +96,7 @@ namespace sharedLibNet
         /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
         public AuthenticationHelper(bool silentFailure = true)
         {
-            this._silentFailure = silentFailure;
+            _silentFailure = silentFailure;
         }
         /// <summary>
         /// todo: insert docstring
@@ -189,7 +189,7 @@ namespace sharedLibNet
                 return;
             }
             JObject returnObj = (JObject)JsonConvert.DeserializeObject(await responseMessage.Content.ReadAsStringAsync());
-            this.allowedCertificates = returnObj["fingerprints"].ToObject<List<string>>();
+            allowedCertificates = returnObj["fingerprints"].ToObject<List<string>>();
         }
 
         /*public async Task<string> GetAccessTokenFromRefreshKey(BOBackendId backendId, string apiKey, string refreshKey)
@@ -284,7 +284,7 @@ namespace sharedLibNet
                                 else
                                 {
                                     //try to reload the certList first
-                                    await this.GetFingerprints(log);
+                                    await GetFingerprints(log);
                                     if (allowedCertificates != null && allowedCertificates.Contains(clientCert.Thumbprint))
                                     {
                                         return new AuthResult(null, null, null);

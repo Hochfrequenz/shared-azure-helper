@@ -17,8 +17,8 @@ namespace sharedLibNet.DependencyInjection
         protected string _configName;
         public CoreAppModule(string authServiceName, string configName = "local.settings.json")
         {
-            this._authServiceName = authServiceName;
-            this._configName = configName;
+            _authServiceName = authServiceName;
+            _configName = configName;
         }
         public override void Load(IServiceCollection services)
         {

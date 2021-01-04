@@ -26,7 +26,7 @@ namespace sharedLibNet
         /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
         public ConfigurationHelper(bool silentFailure = true)
         {
-            this._silentFailure = silentFailure;
+            _silentFailure = silentFailure;
         }
 
         /// <summary>
