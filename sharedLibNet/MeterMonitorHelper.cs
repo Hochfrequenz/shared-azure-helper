@@ -56,10 +56,7 @@ namespace sharedLibNet
         public MeterMonitorHelper(ILogger logger, HttpClient client = null, bool silentFailure = true) : this(silentFailure)
         {
             _logger = logger;
-            if (_logger != null)
-            {
-                _logger.LogInformation($"Instantiated {nameof(MeterMonitorHelper)}. The HttpClient {nameof(httpClient)} has a timeout of {httpClient.Timeout.TotalSeconds} seconds.");
-            }
+            _logger?.LogInformation($"Instantiated {nameof(MeterMonitorHelper)}. The HttpClient {nameof(httpClient)} has a timeout of {httpClient.Timeout.TotalSeconds} seconds.");
             if (client != null)
             {
                 httpClient = client;
