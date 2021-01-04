@@ -26,18 +26,12 @@ namespace sharedLibNet.DependencyInjection
             TOutput result;
             if (typeof(TOutput) == typeof(SecretBundle))
             {
-                if (Log != null)
-                {
-                    Log.LogDebug("Using GetSecretAsync");
-                }
+                Log?.LogDebug("Using GetSecretAsync");
                 result = (TOutput)(object)(await KVClient.GetSecretAsync(_keyvaultUrl, elementName));
             }
             else
             {   //if(typeof(TOutput)==typeof(CertificateBundle))
-                if (Log != null)
-                {
-                    Log.LogDebug("Using GetCertificateAsync");
-                }
+                Log?.LogDebug("Using GetCertificateAsync");
                 result = (TOutput)(object)await KVClient.GetCertificateAsync(_keyvaultUrl, elementName);
             }
             return result;
