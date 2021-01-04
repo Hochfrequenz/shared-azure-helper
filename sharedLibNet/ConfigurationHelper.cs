@@ -87,8 +87,8 @@ namespace sharedLibNet
             }
             catch (Exception e) // todo: no pokemon exceptio nhandling. Probably we'll only need to catch the JsonReaderException
             {
-                _logger.LogError($"Response could not be deserialied: {e}");
-                throw e;
+                _logger.LogError(e, $"Response could not be deserialied: {e}");
+                throw;
             }
             return result;
         }
@@ -168,8 +168,8 @@ namespace sharedLibNet
             }
             catch (Exception e)
             {
-                _logger.LogError($"Response could not be deserialied: {e}");
-                throw e;
+                _logger.LogError(e, $"Response could not be deserialied: {e}");
+                throw;
             }
             return result;
         }

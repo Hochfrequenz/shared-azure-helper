@@ -375,7 +375,7 @@ namespace sharedLibNet
             {
                 if (log != null)
                 {
-                    log.LogDebug($"Don't have an access token yet. Trying to configure");
+                    log.LogDebug("Don't have an access token yet. Trying to configure");
                 }
                 await Configure(log);
                 if (_accessToken == null)
