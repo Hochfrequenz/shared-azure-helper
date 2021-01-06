@@ -1,0 +1,16 @@
+name: ReSharper
+
+on:
+  pull_request: {}
+
+jobs:
+  analyse:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: resharper
+        uses: glassechidna/resharper-action@master
+        with:
+          solution: sharedLibNet.sln
