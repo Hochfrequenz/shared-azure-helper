@@ -22,7 +22,13 @@ namespace sharedLibNet
     /// </summary>
     public class MeterMonitorHelper
     {
-        protected static HttpClient httpClient = new HttpClient();
+        protected static HttpClient httpClient = new HttpClient(
+            new HttpClientHandler()
+            {
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+            }
+            );
+
         protected ILogger _logger = null;
 
         protected readonly bool _silentFailure;
@@ -162,8 +168,10 @@ namespace sharedLibNet
             using (MiniProfiler.Current.Step(nameof(GetMeterMonitors)))
             {
                 Dictionary<string, string> queries = new Dictionary<string, string>();
-                queries.Add(nameof(limit), limit.ToString());
-                queries.Add(nameof(offset), offset.ToString());
+                if (limit > 0)
+                    queries.Add(nameof(limit), limit.ToString());
+                if (offset > 0)
+                    queries.Add(nameof(offset), offset.ToString());
                 queries.Add(nameof(withError), withError.ToString());
                 HttpRequestMessage request = new HttpRequestMessage()
                 {
@@ -321,6 +329,8 @@ namespace sharedLibNet
             }
             _logger.LogDebug($"Adding header '{HeaderNames.BACKEND_ID}'");
             request.Headers.Add(HeaderNames.BACKEND_ID, backendId.ToString());
+            _logger.LogDebug($"Adding header 'Accept-Encoding'");
+            request.Headers.Add("Accept-Encoding", "gzip, deflate");
         }
     }
 }
