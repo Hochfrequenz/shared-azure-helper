@@ -37,7 +37,7 @@ namespace sharedLibNetTests
         [Fact]
         public async Task TestMeterMonitorHelperMocker()
         {
-            string json = "";
+            string json;
             using (StreamReader r = new StreamReader("test_data\\getall-16121856537571.json"))
             {
                 json = r.ReadToEnd();
