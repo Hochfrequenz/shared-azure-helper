@@ -22,8 +22,14 @@ namespace sharedLibNet
     /// </summary>
     public class MeterMonitorHelper
     {
-        protected static HttpClient HttpClient = new HttpClient();
-        protected readonly ILogger Logger = null;
+        protected static HttpClient httpClient = new HttpClient(
+            new HttpClientHandler()
+            {
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+            }
+            );
+
+        protected ILogger _logger = null;
 
         protected readonly bool SilentFailure;
 
@@ -158,12 +164,12 @@ namespace sharedLibNet
         {
             using (MiniProfiler.Current.Step(nameof(GetMeterMonitors)))
             {
-                Dictionary<string, string> queries = new Dictionary<string, string>
-                {
-                    {nameof(limit), limit.ToString()},
-                    {nameof(offset), offset.ToString()},
-                    {nameof(withError), withError.ToString()}
-                };
+                Dictionary<string, string> queries = new Dictionary<string, string>();
+                if (limit > 0)
+                    queries.Add(nameof(limit), limit.ToString());
+                if (offset > 0)
+                    queries.Add(nameof(offset), offset.ToString());
+                queries.Add(nameof(withError), withError.ToString());
                 HttpRequestMessage request = new HttpRequestMessage()
                 {
                     Method = HttpMethod.Get,
@@ -320,6 +326,8 @@ namespace sharedLibNet
             }
             Logger.LogDebug($"Adding header '{HeaderNames.BACKEND_ID}'");
             request.Headers.Add(HeaderNames.BACKEND_ID, backendId.ToString());
+            _logger.LogDebug($"Adding header 'Accept-Encoding'");
+            request.Headers.Add("Accept-Encoding", "gzip, deflate");
         }
     }
 }
