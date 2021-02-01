@@ -40,7 +40,7 @@ namespace sharedLibNetTests
             string json;
             using (StreamReader r = new StreamReader("test_data\\getall-16121856537571.json"))
             {
-                json = r.ReadToEnd();
+                json = await r.ReadToEndAsync();
             }
             var handlerMock = new Mock<HttpMessageHandler>();
             var response = new HttpResponseMessage
