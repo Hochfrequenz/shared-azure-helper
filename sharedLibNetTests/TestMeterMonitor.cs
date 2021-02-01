@@ -57,9 +57,11 @@ namespace sharedLibNetTests
                   )
                .ReturnsAsync(response);
 
-            var httpClient = new HttpClient(handlerMock.Object);
-            httpClient.BaseAddress = new Uri("https://fake-url/metermonitor/");
-            httpClient.Timeout = TimeSpan.FromMinutes(10);
+            var httpClient = new HttpClient(handlerMock.Object)
+            {
+                BaseAddress = new Uri("https://fake-url/metermonitor/"),
+                Timeout = TimeSpan.FromMinutes(10)
+            };
             var result = LoggerHelper.CreateLogger("Dei Mudder sein Service", null, null);
             var logger = result.logger;
             MeterMonitorHelper mmrHelper = new MeterMonitorHelper(logger, httpClient);
