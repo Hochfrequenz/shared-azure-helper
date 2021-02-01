@@ -13,7 +13,7 @@ namespace sharedLibNet.DependencyInjection
 
         public CoreFunctionFactory(IModule module = null)
         {
-            this._container = new ContainerBuilder()
+            _container = new ContainerBuilder()
                                   .RegisterModule(module)
                                   .Build();
         }
@@ -22,7 +22,7 @@ namespace sharedLibNet.DependencyInjection
             where TFunction : IFunction
         {
             // Resolve the function instance directly from the container.
-            var function = this._container.GetService<TFunction>();
+            var function = _container.GetService<TFunction>();
             function.Log = log;
 
             return function;

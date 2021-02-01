@@ -28,7 +28,8 @@ namespace sharedLibNet.Model
 
         [JsonProperty("tags", NullValueHandling = NullValueHandling.Ignore)]
         public string[] Tags { get; set; }
-
+        
+        // ToDo: is this really called "vaild"? or should it be "valid" and never worked so far?
         [JsonProperty("vaildTo", NullValueHandling = NullValueHandling.Ignore)]
         public string VaildTo { get; set; }
 

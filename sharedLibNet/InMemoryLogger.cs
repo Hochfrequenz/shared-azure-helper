@@ -39,7 +39,7 @@ namespace sharedLibNet
                 Timestamp = DateTimeOffset.UtcNow,
                 Message = formatter(state, exception) + (exception == null ? "" : "\r\n" + exception),
                 Category = categoryName,
-                EventId = eventId.Id,
+                EventId = eventId.Id
             };
 
             lock (_messages)

@@ -50,9 +50,9 @@ namespace sharedLibNet
         public string Token { get; private set; }
         public AuthResult(ClaimsPrincipal principal, SecurityToken tokenInfo, string token)
         {
-            this.Principal = principal;
-            this.TokenInfo = tokenInfo;
-            this.Token = token;
+            Principal = principal;
+            TokenInfo = tokenInfo;
+            Token = token;
         }
     }
 
@@ -96,7 +96,7 @@ namespace sharedLibNet
         /// <param name="silentFailure">set true to return null in case of error, if false an <see cref="HfException"/> is thrown</param>
         public AuthenticationHelper(bool silentFailure = true)
         {
-            this._silentFailure = silentFailure;
+            _silentFailure = silentFailure;
         }
         /// <summary>
         /// todo: insert docstring
@@ -189,7 +189,7 @@ namespace sharedLibNet
                 return;
             }
             JObject returnObj = (JObject)JsonConvert.DeserializeObject(await responseMessage.Content.ReadAsStringAsync());
-            this.allowedCertificates = returnObj["fingerprints"].ToObject<List<string>>();
+            allowedCertificates = returnObj["fingerprints"].ToObject<List<string>>();
         }
 
         /*public async Task<string> GetAccessTokenFromRefreshKey(BOBackendId backendId, string apiKey, string refreshKey)
@@ -284,7 +284,7 @@ namespace sharedLibNet
                                 else
                                 {
                                     //try to reload the certList first
-                                    await this.GetFingerprints(log);
+                                    await GetFingerprints(log);
                                     if (allowedCertificates != null && allowedCertificates.Contains(clientCert.Thumbprint))
                                     {
                                         return new AuthResult(null, null, null);
@@ -375,7 +375,7 @@ namespace sharedLibNet
             {
                 if (log != null)
                 {
-                    log.LogDebug($"Don't have an access token yet. Trying to configure");
+                    log.LogDebug("Don't have an access token yet. Trying to configure");
                 }
                 await Configure(log);
                 if (_accessToken == null)
@@ -400,7 +400,7 @@ namespace sharedLibNet
             }
             request.AddHeader(HeaderNames.Auth.Authorization, "Bearer " + _accessToken);
             request.AddHeader(HeaderNames.Auth.HfAuthorization, "Bearer " + _accessToken);
-            IRestResponse response = await authClient.ExecuteTaskAsync(request);
+            IRestResponse response = await authClient.ExecuteAsync(request);
             if (response.IsSuccessful == false)
             {
                 string errorMessage = $"AuthService ({authUrl}) could not be reached: {response.StatusCode}";
@@ -477,7 +477,7 @@ namespace sharedLibNet
                     throw new InvalidOperationException(errorMessage);
                 }
 
-                IRestResponse response = await client.ExecuteTaskAsync(request);
+                IRestResponse response = await client.ExecuteAsync(request);
                 if (log != null)
                 {
                     log.LogDebug($"Oauth response status code: {response.StatusCode}");

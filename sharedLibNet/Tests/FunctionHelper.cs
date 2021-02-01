@@ -16,17 +16,17 @@ namespace sharedLibNet.Tests
     public abstract class FunctionHelper
     {
         protected ILogger logger = new Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory().CreateLogger("NULL");
-        protected ExecutionContext context = new ExecutionContext() { InvocationId = Guid.NewGuid(), FunctionAppDirectory = AppContext.BaseDirectory };
+        protected ExecutionContext context = new ExecutionContext { InvocationId = Guid.NewGuid(), FunctionAppDirectory = AppContext.BaseDirectory };
         public IAuthenticationHelper CreateMockedAuth()
         {
             var authMock = new Mock<IAuthenticationHelper>();
-            authMock.Setup<Task<AuthResult>>(auth => auth.Http_CheckAuth(It.IsAny<HttpRequest>(), It.IsAny<ILogger>(), It.IsAny<string>())).Returns(Task.FromResult<AuthResult>(new AuthResult(null, null, null)));
+            authMock.Setup(auth => auth.Http_CheckAuth(It.IsAny<HttpRequest>(), It.IsAny<ILogger>(), It.IsAny<string>())).Returns(Task.FromResult(new AuthResult(null, null, null)));
             return authMock.Object;
         }
         public IAuthenticationHelper CreateMockedNullAuth()
         {
             var authMock = new Mock<IAuthenticationHelper>();
-            authMock.Setup<Task<AuthResult>>(auth => auth.Http_CheckAuth(It.IsAny<HttpRequest>(), It.IsAny<ILogger>(), It.IsAny<string>())).Returns(Task.FromResult<AuthResult>(null));
+            authMock.Setup(auth => auth.Http_CheckAuth(It.IsAny<HttpRequest>(), It.IsAny<ILogger>(), It.IsAny<string>())).Returns(Task.FromResult<AuthResult>(null));
             return authMock.Object;
         }
         public virtual HttpRequest Arrange(Dictionary<String, StringValues> query, HeaderDictionary headers, object content)

@@ -35,12 +35,12 @@ namespace sharedLibNet
             public JToken content { get; set; }
 
         }
-        public static HttpClient httpClient = new HttpClient();
-        protected static EventGridClient _eventGridClient;
-        protected static string _topicHostname;
+        public static readonly HttpClient httpClient = new HttpClient();
+        protected static EventGridClient EventGridClient;
+        protected static string TopicHostname;
         public const string LogEventName = "HF.EnergyCore.EventLog.Created";
-        protected static CloudStorageAccount _storageAccount = null;
-        protected static CloudBlobClient _blobClient = null;
+        protected static CloudStorageAccount StorageAccount = null;
+        protected static CloudBlobClient BlobClient = null;
         /// <summary>
         /// Creates a new logger and logger provider from a newly instantiated LoggerFactory.
         /// </summary>
@@ -52,9 +52,9 @@ namespace sharedLibNet
             {
                 string topicEndpoint = logTopic;
                 string topicKey = logTopicKey;
-                _topicHostname = new Uri(topicEndpoint).Host;
+                TopicHostname = new Uri(topicEndpoint).Host;
                 TopicCredentials topicCredentials = new TopicCredentials(topicKey);
-                _eventGridClient = new EventGridClient(topicCredentials);
+                EventGridClient = new EventGridClient(topicCredentials);
             }
             var factory = new LoggerFactory();
             var loggerProvider = new InMemoryLoggerProvider();
@@ -211,7 +211,7 @@ namespace sharedLibNet
                         });
                     }
 
-                    await _eventGridClient.PublishEventsAsync(_topicHostname, eventList);
+                    await EventGridClient.PublishEventsAsync(TopicHostname, eventList);
                     return "OK";
                 }
                 catch (Exception e)
@@ -255,7 +255,7 @@ namespace sharedLibNet
                         DataVersion = "2.0"
                     });
 
-                    await _eventGridClient.PublishEventsAsync(_topicHostname, eventList);
+                    await EventGridClient.PublishEventsAsync(TopicHostname, eventList);
                     return newId;
                 }
                 catch (Exception e)
@@ -278,18 +278,18 @@ namespace sharedLibNet
 
         protected static async Task ConnectToBlob(IConfiguration config)
         {
-            if (_storageAccount == null)
+            if (StorageAccount == null)
             {
-                _storageAccount = CloudStorageAccount.Parse(
+                StorageAccount = CloudStorageAccount.Parse(
                    config["Log:Blob:URL"]);
-                _blobClient = _storageAccount.CreateCloudBlobClient();
+                BlobClient = StorageAccount.CreateCloudBlobClient();
             }
         }
 
         public static async Task<LargeLog> StoreLargeLogObject(IConfiguration config, LargeLog logEntry)
         {
             await ConnectToBlob(config);
-            var container = _blobClient.GetContainerReference(logEntry.eventId);
+            var container = BlobClient.GetContainerReference(logEntry.eventId);
             await container.CreateIfNotExistsAsync();
             var blob = container.GetBlockBlobReference(logEntry.logName);
             await blob.UploadTextAsync(JsonConvert.SerializeObject(logEntry.content));
@@ -299,7 +299,7 @@ namespace sharedLibNet
         public static async Task<LargeLog> RetrieveLargeLogObject(IConfiguration config, LargeLog logEntry)
         {
             await ConnectToBlob(config);
-            var container = _blobClient.GetContainerReference(logEntry.eventId);
+            var container = BlobClient.GetContainerReference(logEntry.eventId);
             try
             {
                 var blob = container.GetBlockBlobReference(logEntry.logName);

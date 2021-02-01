@@ -1,8 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-
+﻿using System;
+using Microsoft.Extensions.DependencyInjection;
 using sharedLibNet.DependencyInjection.Interfaces;
-
-using System;
 
 namespace sharedLibNet.DependencyInjection
 {
@@ -12,7 +10,7 @@ namespace sharedLibNet.DependencyInjection
 
         public ContainerBuilder()
         {
-            this._services = new ServiceCollection();
+            _services = new ServiceCollection();
         }
 
         public IContainerBuilder RegisterModule(IModule module = null)
@@ -22,14 +20,14 @@ namespace sharedLibNet.DependencyInjection
                 module = new Module();
             }
 
-            module.Load(this._services);
+            module.Load(_services);
 
             return this;
         }
 
         public IServiceProvider Build()
         {
-            var provider = this._services.BuildServiceProvider();
+            var provider = _services.BuildServiceProvider();
 
             return provider;
         }
