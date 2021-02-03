@@ -5,6 +5,8 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
+using EshDataExchangeFormats;
+
 using Moq;
 using Moq.Protected;
 
@@ -68,8 +70,10 @@ namespace sharedLibNetTests
             string token = "";
             string apiKey = "";
             var allResults = await mmrHelper.GetMeterMonitors(token, apiKey,
-                new EshDataExchangeFormats.lookup.BOBackendId("HOCHFREQUENZ_BASIC_AUTH"), withError: false);
+                new EshDataExchangeFormats.lookup.BOBackendId("HOCHFREQUENZ_BASIC_AUTH"), withError: true);
             Assert.True(allResults.Count > 20000);
+            handlerMock.Protected().Verify("SendAsync", Times.Once(), 
+                ItExpr.Is<HttpRequestMessage>(mr => mr.Headers.Contains(HeaderNames.BACKEND_ID) && mr.RequestUri.ToString().Contains("withError")), ItExpr.IsAny<CancellationToken>());
         }
     }
 }
