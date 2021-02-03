@@ -17,4 +17,10 @@
     <ProjectReference Include="..\sharedLibNet\sharedLibNet.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="test_data\getall-16121856537571.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
