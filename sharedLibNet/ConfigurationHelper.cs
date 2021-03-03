@@ -94,7 +94,7 @@ namespace sharedLibNet
         }
 
         [Obsolete("Use method with Uri instead of stringly typed configURL")]
-        public async Task<List<Stage>> GetConfigurationWithToken(string token, string client, string app, String configURL, string apiKey) => await GetConfigurationWithToken(token, client, app, new Uri(configURL), apiKey);
+        public async Task<IDictionary<string, Pipeline>> GetConfigurationWithToken(string token, string client, string app, String configURL, string apiKey) => await GetConfigurationWithToken(token, client, app, new Uri(configURL), apiKey);
 
         /// <summary>
         /// Get configuration with token
@@ -105,7 +105,7 @@ namespace sharedLibNet
         /// <param name="configURL"></param>
         /// <param name="apiKey">api key for azure</param>
         /// <returns></returns>
-        public async Task<List<Stage>> GetConfigurationWithToken(string token, string client, string app, Uri configURL, string apiKey)
+        public async Task<IDictionary<string, Pipeline>> GetConfigurationWithToken(string token, string client, string app, Uri configURL, string apiKey)
         {
             dynamic config = new ExpandoObject();
             config.client = client;
@@ -161,10 +161,10 @@ namespace sharedLibNet
                 }
             }
             _logger.LogDebug($"Successfully retrieved POST response with status code {responseMessage}");
-            List<Stage> result;
+            IDictionary<string, Pipeline> result;
             try
             {
-                result = JsonConvert.DeserializeObject<List<Stage>>(await responseMessage.Content.ReadAsStringAsync());
+                result = JsonConvert.DeserializeObject<IDictionary<string, Pipeline>>(await responseMessage.Content.ReadAsStringAsync());
             }
             catch (Exception e)
             {
