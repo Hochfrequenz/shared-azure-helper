@@ -165,7 +165,7 @@ namespace sharedLibNet
         /// <returns>a list of MeterMonitorResult <see cref="MeterMonitorResult"/>></returns>
         ///<exception cref="HfException" >if Could not get the MeterMonitor list and silentFailure is false</exception>
         public async Task<IList<MeterMonitorResult>> GetMeterMonitors(string token, string apiKey, BOBackendId backendId,
-            DateTimeOffset? createdDate, uint limit = 0, uint offset = 0, bool withError = true)
+            DateTimeOffset? createdDate = null, uint limit = 0, uint offset = 0, bool withError = true)
         {
             using (MiniProfiler.Current.Step(nameof(GetMeterMonitors)))
             {
