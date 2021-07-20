@@ -161,9 +161,11 @@ namespace sharedLibNet
         /// <param name="limit">limit number of results</param>
         /// <param name="offset">number of skip results</param>
         /// <param name="withError">with 'toError'?</param>
+        /// <param name="createdDate">specific Date to filter results</param>
         /// <returns>a list of MeterMonitorResult <see cref="MeterMonitorResult"/>></returns>
         ///<exception cref="HfException" >if Could not get the MeterMonitor list and silentFailure is false</exception>
-        public async Task<IList<MeterMonitorResult>> GetMeterMonitors(string token, string apiKey, BOBackendId backendId, uint limit = 0, uint offset = 0, bool withError = true)
+        public async Task<IList<MeterMonitorResult>> GetMeterMonitors(string token, string apiKey, BOBackendId backendId,
+            DateTimeOffset? createdDate = null, uint limit = 0, uint offset = 0, bool withError = true)
         {
             using (MiniProfiler.Current.Step(nameof(GetMeterMonitors)))
             {
@@ -173,6 +175,8 @@ namespace sharedLibNet
                 if (offset > 0)
                     queries.Add(nameof(offset), offset.ToString());
                 queries.Add(nameof(withError), withError.ToString());
+                queries.Add(nameof(createdDate), createdDate.HasValue ? createdDate.Value.ToString() : DateTimeOffset.UtcNow.ToString());
+
                 HttpRequestMessage request = new HttpRequestMessage()
                 {
                     Method = HttpMethod.Get,
