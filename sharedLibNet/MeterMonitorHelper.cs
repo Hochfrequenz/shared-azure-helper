@@ -175,7 +175,7 @@ namespace sharedLibNet
                 if (offset > 0)
                     queries.Add(nameof(offset), offset.ToString());
                 queries.Add(nameof(withError), withError.ToString());
-                queries.Add(nameof(createdDate), createdDate.HasValue ? createdDate.Value.ToString(): DateTimeOffset.UtcNow.ToString());
+                queries.Add(nameof(createdDate), createdDate.HasValue ? createdDate.Value.ToString() : DateTimeOffset.UtcNow.ToString());
 
                 HttpRequestMessage request = new HttpRequestMessage()
                 {
