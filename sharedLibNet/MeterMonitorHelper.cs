@@ -175,7 +175,9 @@ namespace sharedLibNet
                 if (offset > 0)
                     queries.Add(nameof(offset), offset.ToString());
                 queries.Add(nameof(withError), withError.ToString());
-                queries.Add(nameof(createdDate), createdDate.HasValue ? createdDate.Value.ToString() : DateTimeOffset.UtcNow.ToString());
+                string createdDateString = createdDate.HasValue ? createdDate.Value.ToString("yyyy-MM-dd") : DateTimeOffset.UtcNow.ToString("yyyy-MM-dd");
+                queries.Add(nameof(createdDate), createdDateString);
+                _logger.LogInformation($"MeterMonitor List request with createdDate: '{createdDateString}'");
 
                 HttpRequestMessage request = new HttpRequestMessage()
                 {
