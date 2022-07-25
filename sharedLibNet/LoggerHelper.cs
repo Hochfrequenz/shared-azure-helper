@@ -1,4 +1,6 @@
-﻿using BO4E.BO;
+﻿using Azure.Storage.Blobs;
+
+using BO4E.BO;
 using BO4E.Extensions.Encryption;
 
 using EshDataExchangeFormats;
@@ -7,8 +9,6 @@ using Microsoft.Azure.EventGrid;
 using Microsoft.Azure.EventGrid.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -20,6 +20,7 @@ using StackExchange.Profiling;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -39,8 +40,7 @@ namespace sharedLibNet
         protected static EventGridClient _eventGridClient;
         protected static string _topicHostname;
         public const string LogEventName = "HF.EnergyCore.EventLog.Created";
-        protected static CloudStorageAccount _storageAccount = null;
-        protected static CloudBlobClient _blobClient = null;
+        protected static BlobClient _blobClient = null;
         /// <summary>
         /// Creates a new logger and logger provider from a newly instantiated LoggerFactory.
         /// </summary>
@@ -276,34 +276,26 @@ namespace sharedLibNet
             }
         }
 
-        protected static async Task ConnectToBlob(IConfiguration config)
-        {
-            if (_storageAccount == null)
-            {
-                _storageAccount = CloudStorageAccount.Parse(
-                   config["Log:Blob:URL"]);
-                _blobClient = _storageAccount.CreateCloudBlobClient();
-            }
-        }
+       
 
         public static async Task<LargeLog> StoreLargeLogObject(IConfiguration config, LargeLog logEntry)
         {
-            await ConnectToBlob(config);
-            var container = _blobClient.GetContainerReference(logEntry.eventId);
-            await container.CreateIfNotExistsAsync();
-            var blob = container.GetBlockBlobReference(logEntry.logName);
-            await blob.UploadTextAsync(JsonConvert.SerializeObject(logEntry.content));
+            _blobClient = new BlobClient(config["Log:Blob:URL"], logEntry.eventId, logEntry.logName);
+            var blob = _blobClient.UploadAsync(logEntry.content.ToString());
             return new LargeLog() { eventId = logEntry.eventId, logName = logEntry.logName };
         }
 
         public static async Task<LargeLog> RetrieveLargeLogObject(IConfiguration config, LargeLog logEntry)
         {
-            await ConnectToBlob(config);
-            var container = _blobClient.GetContainerReference(logEntry.eventId);
+         
             try
             {
-                var blob = container.GetBlockBlobReference(logEntry.logName);
-                logEntry.content = JsonConvert.DeserializeObject<JToken>(await blob.DownloadTextAsync());
+                
+                _blobClient = new BlobClient(config["Log:Blob:URL"], logEntry.eventId, logEntry.logName);
+                var memStream = new MemoryStream();
+                await _blobClient.DownloadToAsync(memStream);
+                memStream.Position = 0;
+                logEntry.content = JsonConvert.DeserializeObject<JToken>(new StreamReader(memStream).ReadToEnd());
                 return logEntry;
             }
             catch (Exception) // ToDo: fix pokemon catching

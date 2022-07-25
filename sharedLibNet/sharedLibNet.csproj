@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>.net6</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Company>Hochfrequenz</Company>
     <PackageId>Hochfrequenz.sharedAzureHelper</PackageId>
-    <Version>0.0.35</Version>
+    <Version>0.0.36</Version>
     <Authors>Hochfrequenz</Authors>
     <Product>sharedAzureHelper</Product>
     <PackageProjectUrl>https://github.com/Hochfrequenz/shared-azure-helper</PackageProjectUrl>
@@ -15,8 +15,8 @@
     <DebugType>Embedded</DebugType>
     <EmbedAllSources>True</EmbedAllSources>
     <Description>Helper classes to interact with Hochfrequenzes azure services</Description>
-    <AssemblyVersion>0.0.31.0</AssemblyVersion>
-    <FileVersion>0.0.31.0</FileVersion>
+    <AssemblyVersion>0.0.36.0</AssemblyVersion>
+    <FileVersion>0.0.36.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -24,15 +24,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.3.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
     <PackageReference Include="Hochfrequenz.BO4E.Extensions.Encryption" Version="0.2.0" />
     <PackageReference Include="Hochfrequenz.BO4Enet" Version="0.2.2" />
     <PackageReference Include="Hochfrequenz.BO4Enet.DataExchangeFormats" Version="0.1.0-CI-20201216-154742" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.Azure.EventGrid" Version="3.2.0" />
-    <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.0.0" />
-    <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.5" />
-    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.16" />
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.33" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.5" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="3.1.5" />
@@ -50,7 +50,6 @@
     <PackageReference Include="RestSharp" Version="106.12.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.0-beta-20204-02" PrivateAssets="All" />
     <PackageReference Include="SourceLink.Copy.PdbFiles" Version="2.8.3" PrivateAssets="All" />
-    <PackageReference Include="WindowsAzure.Storage" Version="9.3.3" />
   </ItemGroup>
 
 </Project>
